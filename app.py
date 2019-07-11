@@ -12,6 +12,7 @@ load_dotenv()
 #routers
 from api.ping import ping_router
 from api.service import service_router
+from api.requestvalidator import requestvalidator_router
 
 #utils
 from api.util.env import DB
@@ -25,6 +26,7 @@ async def init():
   #routes
   raven.add_routes(ping_router)
   raven.add_routes(service_router)
+  raven.add_routes(requestvalidator_router)
   raven.add_routes([web.static('/dashboard', './client/dist')]) if is_prod else None
   app.add_subapp('/raven', raven)
 
