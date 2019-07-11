@@ -1,0 +1,3 @@
+{
+  "ignore": ["client/", "venv/", ".vscode", ".sonarlint", "__pycache__/", "*$py.class", "*.py[cod]"]
+}
