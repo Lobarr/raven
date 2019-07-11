@@ -10,6 +10,9 @@ service_schema = {
   'state': {
     'type': 'string'
   },
+  'secure': {
+    'type': 'boolean'
+  },
   'target_list': {
     'type': 'list'
   },
