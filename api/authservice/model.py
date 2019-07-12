@@ -15,7 +15,10 @@ class Authservice:
     if valid is True:
       db.insert_one(ctx)
     else:
-        raise Exception("Invalid data provided")
+        raise Exception({
+          'message': 'Invalid data provided',
+          'status_code': 400
+        })
 
   @staticmethod
   async def update(id: str, ctx: object, db):

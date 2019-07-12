@@ -17,6 +17,7 @@ async def post_handler(request: web.Request):
     await CircuitBreaker.create(ctx, DB.get(request, table))
     return web.json_response({
       'message': 'circuitBreaker created',
+      'status_code': 200
     })
   except Exception as err:
     return Error.handle(err)

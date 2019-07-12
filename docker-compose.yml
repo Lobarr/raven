@@ -12,6 +12,14 @@ services:
     image: redis:alpine
     networks: 
     - backend
+  celery:
+    build: .
+    command: celery -A tasks worker -l info
+    volumes:
+      - .:/raven
+    depends_on:
+      - db
+      - cache
   backend: 
     build: 
       context: .
@@ -24,7 +32,7 @@ services:
       - REDIS=redis://cache
       - ENV=dev
     volumes:
-      - ./:/raven
+      - .:/raven
     ports: 
       - "3001:3001"
     networks:

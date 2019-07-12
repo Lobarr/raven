@@ -16,7 +16,7 @@ class Service:
     else:
       raise Exception({
         'messge': 'Invalid data provided',
-        'sttus_code': 400
+        'status_code': 400
       })
   
   @staticmethod

@@ -4,9 +4,9 @@ import { Router, Route, Switch } from 'react-router-dom'
 import { Provider } from 'mobx-react'
 import { createBrowserHistory } from 'history'
 import { RouterStore, syncHistoryWithStore } from 'mobx-react-router'
-import { App } from './views/index';
+import { Login } from './views/index';
 import * as serviceWorker from './serviceWorker';
-import './index.css'
+import './index.scss'
 
 
 const browserHistory = createBrowserHistory()
@@ -20,7 +20,7 @@ class Index extends React.Component {
         <>
           <Router history={history}>
             <Switch>
-              <Route path="/" component={App} />
+              <Route path="/" component={Login} />
             </Switch>
           </Router>
         </>
