@@ -3,6 +3,7 @@ from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.service.schema import service_schema, service_validator
+from api.util import Validate, Crypt
 
 collection_name = 'service'
 
@@ -21,7 +22,8 @@ class Service:
   @staticmethod
   async def update(id: str, ctx: object, db):
     valid = service_validator.validate(ctx)
-    if valid is True and bson.ObjectId.is_valid(id) is True:
+    Validate.object_id(id)
+    if valid is True:
       await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
     else:
       raise Exception({
@@ -31,11 +33,7 @@ class Service:
   
   @staticmethod
   async def get_by_id(id: str, db):
-    if bson.ObjectId.is_valid(id) != True:
-      raise Exception({
-        'messge': 'Invalid data provided',
-        'sttus_code': 400
-      })
+    Validate.object_id(id)
     return await db.find_one({'_id': bson.ObjectId(id)})
   
   @staticmethod
@@ -52,9 +50,39 @@ class Service:
   
   @staticmethod
   async def remove(id: str, db):
-    if bson.ObjectId.is_valid(id) != True:
-      raise Exception({
-        'message': 'Invalid data provided',
-        'status_code': 400
-      })
-    return await db.delete_one({'_id': bson.ObjectId(id)})
+    Validate.object_id(id)
+    await db.delete_one({'_id': bson.ObjectId(id)})
+  
+  @staticmethod
+  async def add_target(id: str, target: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$push': {'targets': target}})
+
+  @staticmethod
+  async def remove_target(id: str, target: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'targets': target}})
+  
+  @staticmethod
+  async def add_whitelist(id: str, host: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$push': {'whitelisted_hosts': host}})
+  
+  @staticmethod
+  async def remove_whitelist(id: str, host: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'whitelisted_hosts': host}})
+  
+  @staticmethod
+  async def add_blacklist(id: str, host: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$push': {'blacklisted_hosts': host}})
+  
+  @staticmethod
+  async def remove_blacklist(id: str, host: str, db):
+    Validate.object_id(id)
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'blacklisted_hosts': host}})
+
+@staticmethod
+def verify_message(message: object, signature: str, public_key: str):
+  return Crypt.verify(message, signature, public_key)

@@ -13,16 +13,16 @@ service_schema = {
   'secure': {
     'type': 'boolean'
   },
-  'target_list': {
+  'targets': {
     'type': 'list'
   },
-  'current_target': {
+  'target': {
     'type': 'string'
   },
-  'whitelisted_clients': {
+  'whitelisted_hosts': {
     'type': 'list'
   },
-  'blacklisted_clients': {
+  'blacklisted_hosts': {
     'type': 'list'
   },
   'public_key': {

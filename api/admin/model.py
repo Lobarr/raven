@@ -51,7 +51,7 @@ class Admin:
   @staticmethod 
   async def verify_password(username: str, password: str, db):
     admin = await Admin.get_by_username(username)
-    match = await Password.validate(password, admin['hash'])
+    match = await Password.validate(password, admin['password'])
     return match 
 
   @staticmethod

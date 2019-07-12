@@ -1,3 +1,5 @@
+workspace.py
+
 # Environments
 .env
 venv/
