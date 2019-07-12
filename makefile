@@ -3,7 +3,7 @@ init:
 	pip install -r requirements.txt
 
 start-server:
-	nodemon app.py
+	nodemon -L app.py
 
 start-client:
 	cd client && npm start

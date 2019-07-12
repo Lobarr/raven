@@ -12,9 +12,10 @@ load_dotenv()
 
 #routers
 from api.ping import ping_router
-from api.service import service_router
+from api.service import service_router 
 from api.insights import insights_router
 from api.requestvalidator import requestvalidator_router
+from api.admin import admin_router, Admin
 from api.authservice import authservice_router
 from api.ratelimiter import ratelimiter_router
 
@@ -32,6 +33,7 @@ async def init():
   raven.add_routes(ping_router)
   raven.add_routes(service_router)
   raven.add_routes(insights_router)
+  raven.add_routes(admin_router)
   raven.add_routes(requestvalidator_router)
   raven.add_routes(authservice_router)
   raven.add_routes(ratelimiter_router)
@@ -49,7 +51,16 @@ async def init():
   for route in list(app.router.routes()):
     cors.add(route)
   
+  admin_count = await Admin.count(raven['mongo']['admin'])
+  if admin_count == 0:
+    await Admin.create({
+      'email': 'root@raven.com',
+      'username': 'root',
+      'password': 'toor'
+    }, raven['mongo']['admin'])
+
   return app
+
 
 if __name__ == "__main__":
   app = init()
