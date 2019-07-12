@@ -49,8 +49,9 @@ class Admin:
     return await db.find({'username': username}).to_list(100)
 
   @staticmethod 
-  async def verify_password(password: str, db):
-    match = await bcrypt.checkpw(input, hash)
+  async def verify_password(username: str, password: str, db):
+    admin = await Admin.get_by_username(username)
+    match = await Password.validate(password, admin['hash'])
     return match 
 
   @staticmethod
