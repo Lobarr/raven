@@ -3,6 +3,9 @@
 
 Microservice API Gateway as a service
 
+### Architecture
+- [Check it out](https://docs.google.com/document/d/1TsANzFWCg4J-9JtuHPwNUlPqHioGLFLV_eMQYSt9IWE/edit)
+
 ### Setup Prerequisites
 
 - Python 3 - [Install](https://www.python.org/downloads/)
