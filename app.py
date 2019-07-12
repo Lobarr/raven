@@ -15,6 +15,7 @@ from api.ping import ping_router
 from api.service import service_router
 from api.insights import insights_router
 from api.requestvalidator import requestvalidator_router
+from api.authservice import authservice_router
 from api.ratelimiter import ratelimiter_router
 
 #utils
@@ -32,6 +33,7 @@ async def init():
   raven.add_routes(service_router)
   raven.add_routes(insights_router)
   raven.add_routes(requestvalidator_router)
+  raven.add_routes(authservice_router)
   raven.add_routes(ratelimiter_router)
   raven.add_routes([web.static('/dashboard', './client/dist')]) if is_prod else None
   app.add_subapp('/raven', raven)
