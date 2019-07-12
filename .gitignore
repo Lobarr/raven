@@ -1,6 +1,7 @@
 workspace.py
 
 # Environments
+workspace.py
 .env
 venv/
 .vscode
