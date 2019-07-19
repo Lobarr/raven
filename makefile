@@ -15,4 +15,7 @@ freeze:
 	pip freeze > requirements.txt
 
 test:
-	python -m pytest 
+	pytest tests
+
+test-watch:
+	ptw --ignore ./client --ignore ./venv -v

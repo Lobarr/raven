@@ -27,3 +27,4 @@ class Bytes:
   @staticmethod
   def decode_bytes(data):
     return base64.b64decode(data)
+    

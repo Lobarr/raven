@@ -1,5 +1,5 @@
 import React from 'react';
-import { Header, HeaderName, HeaderGlobalAction, HeaderGlobalBar, HeaderPanel} from 'carbon-components-react/lib/components/UIShell'
+import { Header, HeaderName, HeaderGlobalBar, HeaderPanel } from 'carbon-components-react/lib/components/UIShell'
 import './Login.css';
 
 function Login() {

@@ -70,13 +70,13 @@ class Crypt:
       algorithm = hashes.SHA256(),
       length = 32,
       sharedinfo = ''.encode('utf-8'),
-      backend = default_backend()
+      backend=default_backend()
     ) 
     key = xkdf.derive(shared_key)
     encryptor = Cipher(
       algorithms.AES(key),
       modes.GCM(iv),
-      backend = default_backend()
+      backend=default_backend()
     ).encryptor()
     ciphertext = encryptor.update(Crypt.__padData(json.dumps(message))) + encryptor.finalize()
     return Bytes.encode_bytes(point + encryptor.tag + ciphertext).decode('utf-8')

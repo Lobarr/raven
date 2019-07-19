@@ -3,7 +3,7 @@ FROM node:latest
 
 COPY . /client
 WORKDIR /client
-RUN npm install
+RUN npm install 
 
 CMD npm start
 

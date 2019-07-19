@@ -4,8 +4,12 @@ from celery import Celery
 from api.util.env import REDIS
 from api.event import Event
 
-app = Celery('tasks', broker=REDIS)
+tasks = Celery('tasks', broker=REDIS)
 
-@app.task
+@tasks.task
 def handle_event(ctx: object):
   asyncio.run(Event.handle_event(ctx))
+
+@tasks.task
+def add(a,b):
+  return a+b

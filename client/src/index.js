@@ -6,7 +6,7 @@ import { createBrowserHistory } from 'history'
 import { RouterStore, syncHistoryWithStore } from 'mobx-react-router'
 import { Login } from './views/index';
 import * as serviceWorker from './serviceWorker';
-import './index.scss'
+import './index.css'
 
 
 const browserHistory = createBrowserHistory()

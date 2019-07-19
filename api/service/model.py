@@ -15,7 +15,7 @@ class Service:
       await db.insert_one(ctx)
     else:
       raise Exception({
-        'messge': 'Invalid data provided',
+        'message': 'Invalid data provided',
         'status_code': 400
       })
   
@@ -83,6 +83,6 @@ class Service:
     Validate.object_id(id)
     await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'blacklisted_hosts': host}})
 
-@staticmethod
-def verify_message(message: object, signature: str, public_key: str):
-  return Crypt.verify(message, signature, public_key)
+  @staticmethod
+  def verify_message(message: object, signature: str, public_key: str):
+    return Crypt.verify(message, signature, public_key)
