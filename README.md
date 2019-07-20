@@ -16,7 +16,7 @@ Microservice API Gateway as a service
 ### Setup Instructions
 * Clone the repo by running the following command
 ```shell
-git clone git@github.ibm.com:Jesuloba-Egunjobi/raven.git && cd raven
+git clone https://github.com/Lobarr/raven.git && cd raven
 ```
 * Create virtual environment and activate
 ```shell
