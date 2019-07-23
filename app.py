@@ -54,13 +54,7 @@ async def init():
   for route in list(app.router.routes()):
     cors.add(route)
   
-  admin_count = await Admin.count(raven['mongo']['admin'])
-  if admin_count == 0:
-    await Admin.create({
-      'email': 'root@raven.com',
-      'username': 'root',
-      'password': 'toor'
-    }, raven['mongo']['admin'])
+  await Admin.create_default(raven['mongo']['admin'])
 
   return app
 
