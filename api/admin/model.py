@@ -71,3 +71,13 @@ class Admin:
         'status_code': 400
       })
     return await db.delete_one({'_id': bson.ObjectId(id)})
+  
+  @staticmethod
+  async def create_default(db):
+    admin_count = await Admin.count(db)
+    if admin_count == 0:
+      await Admin.create({
+        'email': 'root@raven.com',
+        'username': 'root',
+        'password': 'toor'
+      }, db)
