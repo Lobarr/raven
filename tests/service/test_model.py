@@ -5,7 +5,7 @@ from mock import patch, MagicMock
 from asynctest import CoroutineMock
 from expects import expect, equal, raise_error, be_an, have_keys
 from api.service import Service, service_validator
-from api.util import Validate
+from api.util import Validate, Crypt
 
 class TestService:
   @pytest.mark.asyncio
@@ -62,13 +62,109 @@ class TestService:
   
   @pytest.mark.asyncio
   async def test_get_by_state(self, *args):
-    with patch('bson.ObjectId') as bson_object_id_mock:
-      mock_state = 'some-value'
-      bson_object_id_mock.return_value = mock_state      
+    mock_state = 'some-value'
+    mock_db = MagicMock()
+    mock_db.find = CoroutineMock()
+    mock_db.find.return_value = MagicMock()
+    await Service.get_by_state(mock_state, mock_db)
+    mock_db.find.assert_called()    
+    mock_db.find.assert_awaited_with({'state': mock_state})
+  
+  @pytest.mark.asyncio
+  async def test_get_by_secure(self, *args):
+    mock_secure = True
+    mock_db = MagicMock()
+    mock_db.find = CoroutineMock()
+    mock_db.find.return_value = MagicMock()
+    await Service.get_by_secure(mock_secure, mock_db)
+    mock_db.find.assert_called()
+    mock_db.find.assert_awaited_with({'secure': mock_secure})
+  
+  @pytest.mark.asyncio
+  async def test_get_all(self, *args):
+    mock_db = MagicMock()
+    mock_db.find = CoroutineMock()
+    await Service.get_all(mock_db)
+    mock_db.find.assert_called()
+  
+  @pytest.mark.asyncio
+  async def test_remove(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
       mock_db = MagicMock()
-      mock_db.find = CoroutineMock()
+      mock_db.delete_one = CoroutineMock()
+      await Service.remove(mock_id, mock_db)
+      mock_db.delete_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
 
-      await Service.get_by_state(mock_state, mock_db)
-      mock_db.find.assert_called()
-      bson_object_id_mock.assert_called_with(mock_state)
-      expect(mock_db.find_one.await_args[0][0]['state']).to(equal(mock_state))
+  @pytest.mark.asyncio
+  async def test_add_target(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_target = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.add_target(mock_id, mock_target, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$push']['targets']).to(equal(mock_target))
+
+  @pytest.mark.asyncio
+  async def test_remove_target(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_target = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.remove_target(mock_id, mock_target, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$pull']['targets']).to(equal(mock_target))
+
+  @pytest.mark.asyncio
+  async def test_add_whitelist(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_host = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.add_whitelist(mock_id, mock_host, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$push']['whitelisted_hosts']).to(equal(mock_host))
+
+  @pytest.mark.asyncio
+  async def test_remove_whitelist(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_host = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.remove_whitelist(mock_id, mock_host, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$pull']['whitelisted_hosts']).to(equal(mock_host))
+
+  @pytest.mark.asyncio
+  async def test_add_blacklist(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_host = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.add_blacklist(mock_id, mock_host, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$push']['blacklisted_hosts']).to(equal(mock_host))
+
+  @pytest.mark.asyncio
+  async def test_remove_blacklist(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_host = 'some-value'
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
+      await Service.remove_blacklist(mock_id, mock_host, mock_db)
+      mock_db.update_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.call_args[0][1]['$pull']['blacklisted_hosts']).to(equal(mock_host))
