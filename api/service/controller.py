@@ -5,6 +5,7 @@ from bson import json_util
 from aiohttp import web
 from .model import Service
 from api.util import Error, Bson, DB, Validate
+from api.service import service_validator
 
 
 router = web.RouteTableDef()
@@ -14,6 +15,7 @@ table = 'service'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
+    service_validator.validate(ctx)
     await Service.create(ctx, DB.get(request, table))
     return web.json_response({
       'message': 'service created',
@@ -51,8 +53,10 @@ async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     service_id = ctx['id']
+    ctx = pydash.omit(ctx, 'id')
     Validate.object_id(service_id)
-    await Service.update(service_id, pydash.omit(ctx, 'id'), DB.get(request, table))
+    service_validator.validate(ctx)
+    await Service.update(service_id, ctx, DB.get(request, table))
     return web.json_response({
       'message': 'service updated',
     })
