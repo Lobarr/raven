@@ -4,6 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.admin.schema import admin_schema, admin_validator
 from api.util import Password
+from api.util.env import RAVEN_ADMIN_PASS, RAVEN_ADMIN_USER
 
 collection_name = 'admin'
 
@@ -71,3 +72,13 @@ class Admin:
         'status_code': 400
       })
     return await db.delete_one({'_id': bson.ObjectId(id)})
+  
+  @staticmethod
+  async def create_default(db):
+    admin_count = await Admin.count(db)
+    if admin_count == 0:
+      await Admin.create({
+        'email': 'root@raven.com',
+        'username': RAVEN_ADMIN_USER,
+        'password': RAVEN_ADMIN_PASS
+      }, db)

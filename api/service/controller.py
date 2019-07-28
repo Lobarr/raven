@@ -4,7 +4,8 @@ import pydash
 from bson import json_util
 from aiohttp import web
 from .model import Service
-from api.util import Error, Bson, DB
+from api.util import Error, Bson, DB, Validate
+from api.service import service_validator
 
 
 router = web.RouteTableDef()
@@ -14,6 +15,7 @@ table = 'service'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
+    service_validator.validate(ctx)
     await Service.create(ctx, DB.get(request, table))
     return web.json_response({
       'message': 'service created',
@@ -33,6 +35,7 @@ async def get_handler(request: web.Request):
     else:
       services = None
       if 'id' in request._rel_url.query:
+        Validate.object_id(request._rel_url.query.get('id'))
         services = await Service.get_by_id(request._rel_url.query.get('id'), DB.get(request, table))
       elif 'state' in request._rel_url.query:
         services = await Service.get_by_state(request._rel_url.query.get('state'), DB.get(request, table))
@@ -50,7 +53,10 @@ async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     service_id = ctx['id']
-    await Service.update(service_id, pydash.omit(ctx, 'id'), DB.get(request, table))
+    ctx = pydash.omit(ctx, 'id')
+    Validate.object_id(service_id)
+    service_validator.validate(ctx)
+    await Service.update(service_id, ctx, DB.get(request, table))
     return web.json_response({
       'message': 'service updated',
     })
@@ -66,6 +72,7 @@ async def delete_handler(request: web.Request):
         'message': 'Id not provided',
         'status_code': 400
       })
+    Validate.object_id(request._rel_url.query.get('id'))
     await Service.remove(id, DB.get(request, table))
     return web.json_response({
       'message': 'service deleted'
