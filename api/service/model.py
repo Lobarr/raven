@@ -36,15 +36,18 @@ class Service:
   
   @staticmethod
   async def get_by_state(state: str, db):
-    return await db.find({'state': state}).to_list(100)
+    res = await db.find({'state': state})
+    return res.to_list(100)
 
   @staticmethod
   async def get_by_secure(secure: bool, db):
-    return await db.find({'secure': secure}).to_list(100)
+    res = await db.find({'secure': secure})
+    return res.to_list(100)
   
   @staticmethod
   async def get_all(db):
-    return await db.find({}).to_list(100)
+    res = await db.find({})
+    return res.to_list(100)
   
   @staticmethod
   async def remove(id: str, db):
@@ -73,7 +76,3 @@ class Service:
   @staticmethod
   async def remove_blacklist(id: str, host: str, db):
     await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'blacklisted_hosts': host}})
-
-  @staticmethod
-  def verify_message(message: object, signature: str, public_key: str):
-    return Crypt.verify(message, signature, public_key)
