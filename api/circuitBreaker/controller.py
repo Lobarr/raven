@@ -25,7 +25,7 @@ async def post_handler(request: web.Request):
 @router.get('/circuitBreaker')
 async def get_handler(request: web.Request):
   try:
-    if len(request._rel_url.query.keys()) == 0:
+    if len(request.rel_url.query.keys()) == 0:
       circuitBreakers = await CircuitBreaker.get_all(DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(circuitBreakers),
@@ -33,18 +33,18 @@ async def get_handler(request: web.Request):
       })
     else:
       circuitBreakers = None
-      if 'id' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_id(request._rel_url.query.get('id'), DB.get(request, table))
-      elif 'service_id' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_service_id(request._rel_url.query.get('service_id'), DB.get(request, table))
-      elif 'status_code' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_status_code(int(request._rel_url.query.get('status_code')), DB.get(request, table))
-      elif 'method' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_method(request._rel_url.query.get('method'), DB.get(request, table))
-      elif 'path' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_path(request._rel_url.query.get('path'), DB.get(request, table))
-      elif 'threshold_percent' in request._rel_url.query:
-        circuitBreakers = await CircuitBreaker.get_by_threshold_percent(float(request._rel_url.query.get('threshold_percent')), DB.get(request, table))
+      if 'id' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+      elif 'service_id' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_service_id(request.rel_url.query.get('service_id'), DB.get(request, table))
+      elif 'status_code' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_status_code(int(request.rel_url.query.get('status_code')), DB.get(request, table))
+      elif 'method' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_method(request.rel_url.query.get('method'), DB.get(request, table))
+      elif 'path' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_path(request.rel_url.query.get('path'), DB.get(request, table))
+      elif 'threshold_percent' in request.rel_url.query:
+        circuitBreakers = await CircuitBreaker.get_by_threshold_percent(float(request.rel_url.query.get('threshold_percent')), DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(circuitBreakers),
         'status_code': 200
@@ -67,7 +67,7 @@ async def put_handler(request: web.Request):
 @router.delete('/circuitBreaker')
 async def delete_handler(request: web.Request):
   try:
-    id = request._rel_url.query.get('id')
+    id = request.rel_url.query.get('id')
     if id is None:
       raise Exception({
         'message': 'Id not provided',

@@ -1,7 +1,7 @@
 from cerberus import Validator
 
-ratelimit_rule_schema = {
-    'objectId': {
+rate_limit_rule_schema = {
+    '_id': {
         'type': 'string',
         'required': True
     },
@@ -9,11 +9,11 @@ ratelimit_rule_schema = {
         'type': 'string',
         'required': True
     },
-    'maxRequests': {
+    'max_requests': {
         'type': 'integer',
         'required': True
     },
-    'timeLimit': {
+    'time_limit': {
         'type': 'integer',
         'required': True
     },
@@ -25,14 +25,14 @@ ratelimit_rule_schema = {
         'type': 'string',
         'required': True
     },
-    'statusCode': {
+    'status_code': {
         'type': 'integer',
         'required': True
     }
 }
 
-ratelimit_entry_schema = {
-    'ruleId': {
+rate_limit_entry_schema = {
+    'rule_id': {
         'type': 'string',
         'required': True
     },
@@ -46,5 +46,5 @@ ratelimit_entry_schema = {
     }
 }
 
-ratelimit_rule_validator = Validator(ratelimit_rule_schema)
-ratelimit_entry_validator = Validator(ratelimit_entry_schema)
+rate_limit_rule_validator = Validator(rate_limit_rule_schema)
+rate_limit_entry_validator = Validator(rate_limit_entry_schema)

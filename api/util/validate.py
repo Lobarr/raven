@@ -8,3 +8,11 @@ class Validate:
         'message': 'Invalid data provided',
         'status_code': 400
       })
+  
+  @staticmethod
+  def schema(ctx, schema):
+    if not schema.validate(ctx):
+      raise Exception({
+        'message': 'Invalid data provided',
+        'status_code': 400
+      })

@@ -16,7 +16,7 @@ class TestSericeController:
       with patch('json.loads') as loads_mock:
         with patch.object(Service, 'create') as create_mock:
           with patch.object(Error, 'handle') as handle_mock:
-            with patch.object(service_validator, 'validate') as validate_mock:
+            with patch.object(Validate, 'schema') as validate_mock:
               mock_req = MagicMock()
               mock_req.text = CoroutineMock()
               await post_handler(mock_req)
@@ -38,21 +38,21 @@ class TestSericeController:
         with patch('json.loads') as loads_mock:
           with patch.object(Service, 'update') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(service_validator, 'validate') as validate_mock:
+              with patch.object(Validate, 'schema') as validate_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
-                mock_ctx = {
+                mock_query = {
                   'id': 'some-value'
                 }
-                loads_mock.return_value = mock_ctx
+                mock_req.rel_url.query = mock_query
                 await put_handler(mock_req)
                 mock_req.text.assert_called()
                 loads_mock.assert_called()
                 update_mock.assert_called()
                 get_mock.assert_called_with(mock_req, table)
-                object_id_mock.assert_called_with(mock_ctx['id'])
+                object_id_mock.assert_called_with(mock_query['id'])
                 validate_mock.assert_called()
-                expect(update_mock.call_args[0][0]).to(equal(mock_ctx['id']))
+                expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
                 update_mock.side_effect = mock_err
@@ -66,8 +66,8 @@ class TestSericeController:
         with patch.object(Service, 'remove') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
             mock_req = MagicMock()
-            mock_req._rel_url.query.get = MagicMock()
-            mock_req._rel_url.query.get.return_value = 'some-value'
+            mock_req.rel_url.query.get = MagicMock()
+            mock_req.rel_url.query.get.return_value = 'some-value'
             mock_ctx = {
               'id': 'some-value'
             }
@@ -83,7 +83,7 @@ class TestSericeController:
             handle_mock.assert_called_with(mock_err)
 
             try:
-              mock_req._rel_url.query.get.return_value = None
+              mock_req.rel_url.query.get.return_value = None
               await delete_handler(mock_req)
             except Exception as err:
               handle_mock.assert_called_with(err)
@@ -100,7 +100,7 @@ class TestSericeController:
                 with patch.object(Error, 'handle') as handle_mock:
                   with patch.object(Bson, 'to_json') as to_json_mock:
                     mock_req = MagicMock()
-                    mock_req._rel_url.query = {}
+                    mock_req.rel_url.query = {}
                     await get_handler(mock_req)
                     get_mock.assert_called_with(mock_req, table)
                     get_all_mock.assert_called()
@@ -108,7 +108,7 @@ class TestSericeController:
                     mock_query = {
                       'id': 'some-value'
                     }
-                    mock_req._rel_url.query = mock_query
+                    mock_req.rel_url.query = mock_query
                     await get_handler(mock_req)
                     get_by_id_mock.assert_called()
                     expect(get_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))
@@ -117,7 +117,7 @@ class TestSericeController:
                     mock_query = {
                       'state': 'some-value'
                     }
-                    mock_req._rel_url.query = mock_query
+                    mock_req.rel_url.query = mock_query
                     await get_handler(mock_req)
                     get_by_state_mock.assert_called()
                     expect(get_by_state_mock.call_args[0][0]).to(equal(mock_query['state']))
@@ -126,7 +126,7 @@ class TestSericeController:
                     mock_query = {
                       'secure': 'true'
                     }
-                    mock_req._rel_url.query = mock_query
+                    mock_req.rel_url.query = mock_query
                     await get_handler(mock_req)
                     get_by_secure_mock.assert_called()
                     expect(get_by_secure_mock.call_args[0][0]).to(equal(bool(mock_query['secure'])))
