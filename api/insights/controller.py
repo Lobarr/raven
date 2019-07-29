@@ -2,22 +2,22 @@ import json, pydash
 import multidict
 from bson import json_util
 from aiohttp import web
+from .schema import insights_validator
 from .model import Insights
-from api.util import Error, Bson, DB
+from api.util import Error, Bson, DB, Validate
 
 router = web.RouteTableDef()
 table = 'insights'
-
-def get_db(request: web.Request):
-  return request.app['mongo']['insights']
 
 @router.post('/insights')
 async def post_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
+    Validate.schema(body, insights_validator)
     await Insights.create(body, DB.get(request, table))
     return web.json_response({
       'message': 'Insight created',
+      'status_code': 200
     })
   except Exception as err:
      return Error.handle(err)
@@ -27,10 +27,6 @@ async def get_handler(request: web.Request):
   try:
     if len(request.rel_url.query.keys()) == 0:
       insights = await Insights.get_all(DB.get(request, table))
-      return web.json_response({
-        'data': Bson.to_json(insights),
-        'status_code': 200
-      })
     else:
       insights = None
       if 'id' in request.rel_url.query:
@@ -43,7 +39,7 @@ async def get_handler(request: web.Request):
         insights = await Insights.get_by_path(bool(request.rel_url.query.get('path')))
       elif 'method' in request.rel_url.query:
         insights = await Insights.get_by_method(bool(request.rel_url.query.get('method')))
-      return web.json_response({
+    return web.json_response({
         'data': Bson.to_json(insights),
         'status_code': 200
       })
@@ -55,7 +51,9 @@ async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     service_id = ctx['id']
-    await Insights.update(service_id, pydash.omit(ctx, 'id'), DB.get(request, 'insights'))
+    Validate.object_id(service_id)
+    Validate.schema(ctx, insights_validator)
+    await Insights.update(service_id, pydash.omit(ctx, 'id'), DB.get(request, table))
     return web.json_response({
       'message': 'insight updated',
     })
@@ -67,9 +65,11 @@ async def delete_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     service_id = ctx['id']
-    await Insights.remove(service_id, DB.get(request, 'insights'))
+    Validate.object_id(service_id)
+    await Insights.remove(service_id, DB.get(request, table))
     return web.json_response({
       'message': 'insight deleted',
+      'status_code': 200
     })
   except Exception as err:
     return Error.handle(err)

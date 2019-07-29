@@ -1,6 +1,6 @@
 from cerberus import Validator
 
-circuitBreaker_schema = {
+circuit_breaker_schema = {
   '_id': {
     'type': 'string'
   },
@@ -36,4 +36,4 @@ circuitBreaker_schema = {
   }
 }
 
-circuitBreaker_validator = Validator(circuitBreaker_schema)
+circuit_breaker_validator = Validator(circuit_breaker_schema)

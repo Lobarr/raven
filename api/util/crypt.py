@@ -78,7 +78,7 @@ class Crypt:
       modes.GCM(iv),
       backend=default_backend()
     ).encryptor()
-    ciphertext = encryptor.update(Crypt.__padData(json.dumps(message))) + encryptor.finalize()
+    ciphertext = encryptor.update(Crypt._pad_data(json.dumps(message))) + encryptor.finalize()
     return Bytes.encode_bytes(point + encryptor.tag + ciphertext).decode('utf-8')
 
   def decrypt(message: str, receiver_private_key: str) -> str:
@@ -109,13 +109,13 @@ class Crypt:
     ).decryptor()
 
     dt = decryptor.update(ciphertext) + decryptor.finalize()
-    return Crypt.__unpadData(dt).decode('utf-8')
+    return Crypt._unpad_data(dt).decode('utf-8')
 
   """
   appends padding to the provided data
   """
   @staticmethod
-  def __padData(data: str):
+  def _pad_data(data: str):
     padder = padding.PKCS7(128).padder()
     padded_data = padder.update(Bytes.str_to_bytes(data))
     padded_data += padder.finalize()  
@@ -125,7 +125,7 @@ class Crypt:
   removes appended padding from the data
   """
   @staticmethod
-  def __unpadData(dt):
+  def _unpad_data(dt):
     unpadder = padding.PKCS7(128).unpadder()
     data = unpadder.update(dt)
     unpadded = data + unpadder.finalize()

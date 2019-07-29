@@ -5,7 +5,7 @@ class Validate:
   def object_id(id: str):
     if bson.ObjectId.is_valid(id) != True:
       raise Exception({
-        'message': 'Invalid data provided',
+        'message': 'Invalid id provided',
         'status_code': 400
       })
   
