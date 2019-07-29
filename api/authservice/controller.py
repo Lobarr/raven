@@ -22,7 +22,7 @@ async def post_handler(request: web.Request):
 @router.get('/authservice')
 async def get_handler(request: web.Request):
   try:
-    if len(request._rel_url.query.keys()) == 0:
+    if len(request.rel_url.query.keys()) == 0:
       authservice = await Authservice.get_all(DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(authservice),
@@ -30,8 +30,8 @@ async def get_handler(request: web.Request):
       })
     else:
       authservice = None
-      if 'id' in request._rel_url.query:
-        authservice = await Authservice.get_by_id(request._rel_url.query.get('id'), DB.get(request, table))
+      if 'id' in request.rel_url.query:
+        authservice = await Authservice.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(authservice),
         'status_code': 200

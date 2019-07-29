@@ -24,7 +24,7 @@ async def post_handler(request: web.Request):
 @router.get('/event')
 async def get_handler(request: web.Request):
   try:
-    if len(request._rel_url.query.keys()) == 0:
+    if len(request.rel_url.query.keys()) == 0:
       services = await Event.get_all(DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(services),
@@ -32,10 +32,10 @@ async def get_handler(request: web.Request):
       })
     else:
       services = None
-      if 'id' in request._rel_url.query:
-        services = await Event.get_by_id(request._rel_url.query.get('id'), DB.get(request, table))
-      elif 'circuit_breaker_id' in request._rel_url.query:
-        services = await Event.get_by_circuit_breaker_id(request._rel_url.query.get('circuit_breaker_id'), DB.get(request, table))
+      if 'id' in request.rel_url.query:
+        services = await Event.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+      elif 'circuit_breaker_id' in request.rel_url.query:
+        services = await Event.get_by_circuit_breaker_id(request.rel_url.query.get('circuit_breaker_id'), DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(services),
         'status_code': 200
@@ -58,7 +58,7 @@ async def put_handler(request: web.Request):
 @router.delete('/event')
 async def delete_handler(request: web.Request):
   try:
-    id = request._rel_url.query.get('id')
+    id = request.rel_url.query.get('id')
     if id is None:
       raise Exception({
         'message': 'Id not provided',

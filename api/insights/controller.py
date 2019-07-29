@@ -25,7 +25,7 @@ async def post_handler(request: web.Request):
 @router.get('/insights')
 async def get_handler(request: web.Request):
   try:
-    if len(request._rel_url.query.keys()) == 0:
+    if len(request.rel_url.query.keys()) == 0:
       insights = await Insights.get_all(DB.get(request, table))
       return web.json_response({
         'data': Bson.to_json(insights),
@@ -33,16 +33,16 @@ async def get_handler(request: web.Request):
       })
     else:
       insights = None
-      if 'id' in request._rel_url.query:
-        insights = await Insights.get_by_id(request._rel_url.query.get('id'), DB.get(request, table))
-      elif 'remote_ip' in request._rel_url.query:
-        insights = await Insights.get_by_remote_ip(request._rel_url.query.get('remote_ip'), DB.get(request, table))
-      elif 'status_code' in request._rel_url.query:
-        insights = await Insights.get_by_status_code(bool(request._rel_url.query.get('status_code')))
-      elif 'path' in request._rel_url.query:
-        insights = await Insights.get_by_path(bool(request._rel_url.query.get('path')))
-      elif 'method' in request._rel_url.query:
-        insights = await Insights.get_by_method(bool(request._rel_url.query.get('method')))
+      if 'id' in request.rel_url.query:
+        insights = await Insights.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+      elif 'remote_ip' in request.rel_url.query:
+        insights = await Insights.get_by_remote_ip(request.rel_url.query.get('remote_ip'), DB.get(request, table))
+      elif 'status_code' in request.rel_url.query:
+        insights = await Insights.get_by_status_code(bool(request.rel_url.query.get('status_code')))
+      elif 'path' in request.rel_url.query:
+        insights = await Insights.get_by_path(bool(request.rel_url.query.get('path')))
+      elif 'method' in request.rel_url.query:
+        insights = await Insights.get_by_method(bool(request.rel_url.query.get('method')))
       return web.json_response({
         'data': Bson.to_json(insights),
         'status_code': 200
