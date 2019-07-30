@@ -51,7 +51,7 @@ class Service:
   async def advance_target(id: str, db):
     ctx = {}
     service = await Service.get_by_id(id, db)
-    if len(service['targets']) > 0:
+    if 'targets' in service and len(service['targets']) > 0:
       next_target_index = service['cur_target_index'] + 1
       if next_target_index  <= len(service['targets']) - 1:
         ctx['cur_target_index'] = next_target_index

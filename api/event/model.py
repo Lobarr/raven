@@ -1,10 +1,9 @@
 import bson
 import json
+import requests
 from cerberus import Validator
 from typing import Optional
-from aiohttp import ClientSession
-from motor.motor_asyncio import AsyncIOMotorClient
-
+from aiohttp.client import ClientSession
 from api.event import event_schema, event_validator
 from api.util import Validate
 
@@ -13,15 +12,7 @@ collection_name = 'event'
 class Event:
   @staticmethod
   async def create(ctx: object, db):
-    print(ctx)
-    valid = event_validator.validate(ctx)
-    if valid is True:
-      await db.insert_one(ctx)
-    else:
-      raise Exception({
-        'messge': 'Invalid data provided',
-        'status_code': 400
-      })
+    await db.insert_one(ctx)
   
   @staticmethod
   async def update(id: str, ctx: object, db):
@@ -52,7 +43,5 @@ class Event:
 
   @staticmethod
   async def handle_event(ctx: object):
-    async with ClientSession() as session:
-      async with session.post(ctx['target'], data=json.dumps(ctx['body']), headers=ctx['headers']) as resp:
-          pass
-          #TODO integrate detailed logging in case of failure
+    res = requests.post(url=ctx['target'], data=ctx['body'], headers=ctx['headers'])
+    # TODO send email to admins on failure

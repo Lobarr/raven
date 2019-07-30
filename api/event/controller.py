@@ -49,8 +49,9 @@ async def get_handler(request: web.Request):
 async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    event_id = ctx['id']
+    event_id = request.rel_url.query['id']
     Validate.object_id(event_id)
+    Validate.schema(ctx, event_validator)
     await Event.update(event_id, pydash.omit(ctx, 'id'), DB.get(request, table))
     return web.json_response({
       'message': 'event updated',
