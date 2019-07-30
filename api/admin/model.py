@@ -34,8 +34,8 @@ class Admin:
 
   @staticmethod 
   async def verify_password(username: str, password: str, db):
-    admin = await Admin.get_by_username(username)
-    match = await Password.validate(password, admin['password'])
+    admin = await Admin.get_by_username(username, db)
+    match = Password.validate(password, admin['password'])
     return match 
 
   @staticmethod
@@ -56,7 +56,6 @@ class Admin:
     admin_count = await Admin.count(db)
     if admin_count == 0:
       await Admin.create({
-        'email': 'root@raven.com',
         'username': RAVEN_ADMIN_USER,
         'password': RAVEN_ADMIN_PASS
       }, db)

@@ -48,9 +48,10 @@ async def get_handler(request: web.Request):
 async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    admin_id = ctx['id']
+    admin_id = request.rel_url.query['id']
+    Validate.schema(ctx, admin_validator)
     Validate.object_id(admin_id)
-    await Admin.update(admin_id, pydash.omit(ctx, 'id'), DB.get(request, table))
+    await Admin.update(admin_id, ctx, DB.get(request, table))
     return web.json_response({
       'message': 'Admin updated',
     })
