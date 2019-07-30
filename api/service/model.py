@@ -48,6 +48,18 @@ class Service:
     await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'targets': target}})
   
   @staticmethod
+  async def advance_target(id: str, db):
+    ctx = {}
+    service = await Service.get_by_id(id, db)
+    if len(service['targets']) > 0:
+      next_target_index = service['cur_target_index'] + 1
+      if next_target_index  <= len(service['targets']) - 1:
+        ctx['cur_target_index'] = next_target_index
+      else:
+        ctx['cur_target_index'] = 0
+      await Service.update(id, ctx, db)
+
+  @staticmethod
   async def add_whitelist(id: str, host: str, db):
     await db.update_one({'_id': bson.ObjectId(id)}, {'$push': {'whitelisted_hosts': host}})
   

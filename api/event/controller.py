@@ -37,7 +37,7 @@ async def get_handler(request: web.Request):
         Validate.object_id(request.rel_url.query.get('circuit_breaker_id'))
         services = await Event.get_by_circuit_breaker_id(request.rel_url.query.get('circuit_breaker_id'), DB.get(request, table))
       elif 'target' in request.rel_url.query:
-        services = await Event.get_by_target(request._rel_url.query.get('target'), DB.get(request, table))
+        services = await Event.get_by_target(request.rel_url.query.get('target'), DB.get(request, table))
     return web.json_response({
       'data': Bson.to_json(services),
       'status_code': 200

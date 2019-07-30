@@ -1,7 +1,4 @@
 import bson
-from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorClient
-
 from api.insights.schema import insights_schema, insights_validator
 
 collection_name = 'insights'
@@ -9,12 +6,22 @@ collection_name = 'insights'
 class Insights:
   @staticmethod
   async def create(ctx: object, db):
-    db.insert_one(ctx)
+    await db.insert_one(ctx)
 
   @staticmethod
   async def update(id: str, ctx: object, db):
     await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
   
+  @staticmethod
+  async def get_by_service_id(id: str, db):
+    res = await db.find({'service_id': id})
+    return res.to_list(100)
+
+  @staticmethod
+  async def get_by_scheme(scheme: str, db):
+    res = await db.find({'scheme': scheme})
+    return res.to_list(100)
+
   @staticmethod
   async def get_by_id(id: str, db):
     return await db.find_one({'_id': bson.ObjectId(id)})

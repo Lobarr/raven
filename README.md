@@ -49,4 +49,8 @@ make start-app
 ```
 PORT=3001
 ENV=dev
+DB=mongodb://raven
+JWT_SECRET=12raven34
+RAVEN_ADMIN_USER=root
+RAVEN_ADMIN_PASS=toor
 ```

@@ -47,10 +47,10 @@ class TestRequestValidator:
     mock_db = MagicMock()
     mock_db.find = CoroutineMock()
     await RequestValidator.get_all(mock_db)
-    mock_db.find.assert_called()
+    mock_db.find.assert_called_with({})
   
   @pytest.mark.asyncio
-  async def test_get_by_service_Id(self, *args):
+  async def test_get_by_service_id(self, *args):
     mock_service_id = 'some-value'
     mock_db = MagicMock()
     mock_db.find = CoroutineMock()

@@ -4,7 +4,7 @@ import bson
 import json
 import base64
 from cerberus import Validator
-from api.ratelimiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
+from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
 from api.util import Bson, Redis
 
 rate_limit_rule_set = 'rate_limit_rules'
