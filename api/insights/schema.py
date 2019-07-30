@@ -16,7 +16,7 @@ insights_schema = {
   },
   'remote_ip': {
     'type': 'string',
-    'regex': r'{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+    'regex': r'^{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
   },
   'scheme': {
     'type': 'string',
