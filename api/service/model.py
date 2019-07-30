@@ -10,25 +10,11 @@ collection_name = 'service'
 class Service:
   @staticmethod
   async def create(ctx: object, db):
-    valid = service_validator.validate(ctx)
-    if valid is True:
-      await db.insert_one(ctx)
-    else:
-      raise Exception({
-        'message': 'Invalid data provided',
-        'status_code': 400
-      })
+    await db.insert_one(ctx)
   
   @staticmethod
   async def update(id: str, ctx: object, db):
-    valid = service_validator.validate(ctx)
-    if valid is True:
-      await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
-    else:
-      raise Exception({
-        'message': 'Invalid data provided',
-        'status_code': 400
-      })
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
   
   @staticmethod
   async def get_by_id(id: str, db):

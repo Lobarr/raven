@@ -10,48 +10,31 @@ from api.util import Validate, Crypt
 class TestService:
   @pytest.mark.asyncio
   async def test_create(self, *args):
-    with patch.object(service_validator, 'validate') as validate_mock:
-      validate_mock.return_value = True
-      mock_ctx = {}
-      mock_db = MagicMock()
-      mock_db.insert_one = CoroutineMock()
-      await Service.create(mock_ctx, mock_db)
-      mock_db.insert_one.assert_awaited_with(mock_ctx)
-    
-      try:
-        validate_mock.return_value = False
-        mock_ctx = {}
-        mock_db = {}
-        await Service.create(mock_ctx, mock_db)
-      except Exception as err:
-        expect(err.args[0]).to(be_an(object))
-        expect(err.args[0]).to(have_keys('message', 'status_code'))
+    mock_ctx = {}
+    mock_db = MagicMock()
+    mock_db.insert_one = CoroutineMock()
+    await Service.create(mock_ctx, mock_db)
+    mock_db.insert_one.assert_awaited_with(mock_ctx)
     
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
-      with patch.object(service_validator, 'validate') as validate_mock:
-        validate_mock.return_value = True
-        bson_object_id_mock.return_value = True
-        mock_id = 'some-value'
-        mock_ctx = {}
-        mock_db = MagicMock()
-        mock_db.update_one = CoroutineMock()
+      mock_id = 'some-value'
+      bson_object_id_mock.return_value = mock_id  
+      mock_ctx = {}
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
 
-        await Service.update(mock_id, mock_ctx, mock_db)
-        bson_object_id_mock.assert_called_with(mock_id)
-
-        try:
-          validate_mock.return_value = False
-          await Service.update(mock_id, mock_ctx, mock_db)
-        except Exception as err:
-          expect(err.args[0]).to(have_keys('message', 'status_code'))
+      await Service.update(mock_id, mock_ctx, mock_db)
+      mock_db.update_one.assert_called()
+      bson_object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
           
   @pytest.mark.asyncio
   async def test_get_by_id(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
       mock_id = 'some-value'
-      bson_object_id_mock.return_value = mock_id      
+      bson_object_id_mock.return_value = mock_id  
       mock_db = MagicMock()
       mock_db.find_one = CoroutineMock()
 

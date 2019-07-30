@@ -114,18 +114,18 @@ class RequestValidator:
 			uppercase=policy['upper_case_count'],
 			numbers=policy['numbers_count'],
 			special=policy['specials_count'],
-			nonletters=['non_letters_count'],
+			nonletters=policy['non_letters_count'],
 		)
 		
 		res = password_policy.test(password)
 		if res != []:
 			raise Exception({
-				'message': 'Password does not match policy configured',
+				'message': 'Password provided does not match policy configured',
 				'status_code': 400
 			})
 
 	@staticmethod
-	def enforce_strength(password: str, strength_percentage: float):
+	async def enforce_strength(password: str, strength_percentage: float):
 		stats = PasswordStats(password)
 		if stats.strength() < strength_percentage:
 			raise Exception({
