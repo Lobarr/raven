@@ -44,8 +44,8 @@ async def get_handler(request: web.Request):
         circuit_breakers = await CircuitBreaker.get_by_method(request.rel_url.query.get('method'), DB.get(request, table))
       elif 'path' in request.rel_url.query:
         circuit_breakers = await CircuitBreaker.get_by_path(request.rel_url.query.get('path'), DB.get(request, table))
-      elif 'threshold_percent' in request.rel_url.query:
-        circuit_breakers = await CircuitBreaker.get_by_threshold_percent(float(request.rel_url.query.get('threshold_percent')), DB.get(request, table))
+      elif 'threshold' in request.rel_url.query:
+        circuit_breakers = await CircuitBreaker.get_by_threshold(float(request.rel_url.query.get('threshold')), DB.get(request, table))
     return web.json_response({
       'data': Bson.to_json(circuit_breakers),
       'status_code': 200
@@ -57,7 +57,8 @@ async def get_handler(request: web.Request):
 async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    circuit_breaker_id = ctx['id']
+    circuit_breaker_id = request.rel_url.query['id']
+    Validate.schema(ctx, circuit_breaker_validator)
     Validate.object_id(circuit_breaker_id)
     await CircuitBreaker.update(circuit_breaker_id, pydash.omit(ctx, 'id'), DB.get(request, table))
     return web.json_response({

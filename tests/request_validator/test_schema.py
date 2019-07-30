@@ -16,5 +16,5 @@ def test_request_validator_schema():
   for prop in ['length', 'upper_case_count', 'numbers_count', 'specials_count', 'non_letters_count', ]:
     expect(request_validator_schema['password_policy']['schema'][prop]['type']).to(equal('integer'))
 
-  for prop in ['strength_percentage']:
+  for prop in ['strength']:
     expect(request_validator_schema['password_policy']['schema'][prop]['type']).to(equal('float'))

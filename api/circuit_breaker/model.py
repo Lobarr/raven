@@ -1,10 +1,7 @@
 import bson
-from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorClient
-
 from api.circuit_breaker.schema import circuit_breaker_schema, circuit_breaker_validator
 
-collection_name = 'circuitBreaker'
+table = 'circuitBreaker'
 
 class CircuitBreaker:
   @staticmethod
@@ -40,8 +37,8 @@ class CircuitBreaker:
     return res.to_list(100)
 
   @staticmethod
-  async def get_by_threshold_percent(threshold_percent: float, db):
-    res = await db.find({'threshold_percent': threshold_percent})
+  async def get_by_threshold(threshold: float, db):
+    res = await db.find({'threshold': threshold})
     return res.to_list(100)
 
   @staticmethod

@@ -23,7 +23,7 @@ circuit_breaker_schema = {
   'path': {
     'type': 'string'
   },
-  'threshold_percent': {
+  'threshold': {
     'type': 'float',
     'min': '0.0',
     'max': '1.0'
