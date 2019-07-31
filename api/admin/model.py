@@ -11,74 +11,51 @@ collection_name = 'admin'
 class Admin:
   @staticmethod
   async def create(ctx: object, db):
-    valid = admin_validator.validate(ctx)
     ctx['password'] = Password.hash(ctx['password'])
-    if valid is True:
-      await db.insert_one(ctx)
-    else:
-      raise Exception({
-        'messge': 'Invalid data provided',
-        'status_code': 400
-      })
+    await db.insert_one(ctx)
 
   @staticmethod
   async def update(id: str, ctx: object, db):
-    valid = admin_validator.validate(ctx)
-    if valid is True and bson.ObjectId.is_valid(id) is True:
-      await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
-    else:
-      raise Exception({
-        'message': 'Invalid data provided',
-        'status_code': 400
-      })
+    await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
   
   @staticmethod
   async def get_by_id(id: str, db):
-    if bson.ObjectId.is_valid(id) != True:
-      raise Exception({
-        'messge': 'Invalid data provided',
-        'sttus_code': 400
-      })
     return await db.find_one({'_id': bson.ObjectId(id)})
 
   @staticmethod
   async def get_by_email(email: str, db):
-    return await db.find({'email': email}).to_list(100)
+    res = await db.find({'email': email})
+    return res.to_list(100)
     
   @staticmethod 
   async def get_by_username(username: str, db):
-    return await db.find({'username': username}).to_list(100)
+    res = await db.find({'username': username})
+    return res.to_list(100)
 
   @staticmethod 
   async def verify_password(username: str, password: str, db):
-    admin = await Admin.get_by_username(username)
-    match = await Password.validate(password, admin['password'])
+    admin = await Admin.get_by_username(username, db)
+    match = Password.validate(password, admin['password'])
     return match 
 
   @staticmethod
   async def get_all(db):
-    return await db.find({}).to_list(100) 
+    res = await db.find({})
+    return res.to_list(100) 
 
   @staticmethod
   async def count(db):
-    collection_count = await db.count_documents({})
-    return collection_count
+    return await db.count_documents({})
   
   @staticmethod
   async def remove(id: str, db):
-    if bson.ObjectId.is_valid(id) != True:
-      raise Exception({
-        'message': 'Invalid data provided',
-        'status_code': 400
-      })
-    return await db.delete_one({'_id': bson.ObjectId(id)})
+    await db.delete_one({'_id': bson.ObjectId(id)})
   
   @staticmethod
   async def create_default(db):
     admin_count = await Admin.count(db)
     if admin_count == 0:
       await Admin.create({
-        'email': 'root@raven.com',
         'username': RAVEN_ADMIN_USER,
         'password': RAVEN_ADMIN_PASS
       }, db)

@@ -6,10 +6,6 @@ from api.event import Event
 
 tasks = Celery('tasks', broker=REDIS)
 
-@tasks.task
+@tasks.task(name='raven.api.event')
 def handle_event(ctx: object):
   asyncio.run(Event.handle_event(ctx))
-
-@tasks.task
-def add(a,b):
-  return a+b

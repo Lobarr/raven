@@ -1,33 +1,33 @@
 version: "3"
 networks:
   backend:
-services: 
+services:
   db:
     image: "mongo:latest"
     ports:
       - 27017:27017
-    networks: 
+    networks:
     - backend
   cache:
     image: redis:alpine
-    ports: 
+    ports:
       - 6379:6379
-    networks: 
+    networks:
       - backend
   celery:
     build: .
     command: celery worker -A tasks -l info
     volumes:
       - .:/raven
-    environment: 
+    environment:
       - REDIS=redis://cache
     depends_on:
       - db
       - cache
     networks:
       - backend
-  backend: 
-    build: 
+  backend:
+    build:
       context: .
     depends_on:
       - db
@@ -38,7 +38,7 @@ services:
       - ENV=dev
     volumes:
       - .:/raven
-    ports: 
+    ports:
       - 3001:3001
     networks:
       - backend
@@ -46,7 +46,7 @@ services:
     build: ./client
     ports:
       - 3000:3000
-    volumes: 
+    volumes:
       - ./client:/client
-    depends_on: 
+    depends_on:
       - backend

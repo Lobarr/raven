@@ -16,8 +16,8 @@ service_schema = {
   'targets': {
     'type': 'list'
   },
-  'target': {
-    'type': 'string'
+  'cur_target_index': {
+    'type': 'integer'
   },
   'whitelisted_hosts': {
     'type': 'list'

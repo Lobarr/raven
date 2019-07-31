@@ -1,57 +1,41 @@
 import pytest
 import asyncio
 import mock
+import asynctest
 from mock import patch, MagicMock
 from asynctest import CoroutineMock
-from expects import expect, equal, raise_error, be_an, have_keys
+from expects import expect, equal, raise_error, be_an, have_keys, be_above, be_below
 from api.service import Service, service_validator
 from api.util import Validate, Crypt
 
 class TestService:
   @pytest.mark.asyncio
   async def test_create(self, *args):
-    with patch.object(service_validator, 'validate') as validate_mock:
-      validate_mock.return_value = True
-      mock_ctx = {}
-      mock_db = MagicMock()
-      mock_db.insert_one = CoroutineMock()
-      await Service.create(mock_ctx, mock_db)
-      mock_db.insert_one.assert_awaited_with(mock_ctx)
-    
-      try:
-        validate_mock.return_value = False
-        mock_ctx = {}
-        mock_db = {}
-        await Service.create(mock_ctx, mock_db)
-      except Exception as err:
-        expect(err.args[0]).to(be_an(object))
-        expect(err.args[0]).to(have_keys('message', 'status_code'))
+    mock_ctx = {}
+    mock_db = MagicMock()
+    mock_db.insert_one = CoroutineMock()
+    await Service.create(mock_ctx, mock_db)
+    mock_db.insert_one.assert_awaited_with(mock_ctx)
     
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
-      with patch.object(service_validator, 'validate') as validate_mock:
-        validate_mock.return_value = True
-        bson_object_id_mock.return_value = True
-        mock_id = 'some-value'
-        mock_ctx = {}
-        mock_db = MagicMock()
-        mock_db.update_one = CoroutineMock()
+      mock_id = 'some-value'
+      bson_object_id_mock.return_value = mock_id  
+      mock_ctx = {}
+      mock_db = MagicMock()
+      mock_db.update_one = CoroutineMock()
 
-        await Service.update(mock_id, mock_ctx, mock_db)
-        bson_object_id_mock.assert_called_with(mock_id)
-
-        try:
-          validate_mock.return_value = False
-          await Service.update(mock_id, mock_ctx, mock_db)
-        except Exception as err:
-          expect(err.args[0]).to(have_keys('message', 'status_code'))
+      await Service.update(mock_id, mock_ctx, mock_db)
+      mock_db.update_one.assert_called()
+      bson_object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
           
   @pytest.mark.asyncio
   async def test_get_by_id(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
       mock_id = 'some-value'
-      bson_object_id_mock.return_value = mock_id      
+      bson_object_id_mock.return_value = mock_id  
       mock_db = MagicMock()
       mock_db.find_one = CoroutineMock()
 
@@ -81,11 +65,52 @@ class TestService:
     mock_db.find.assert_awaited_with({'secure': mock_secure})
   
   @pytest.mark.asyncio
+  async def test_advance_target(self, *args):
+    with asynctest.patch.object(Service, 'get_by_id') as get_by_id_mock:
+      with asynctest.patch.object(Service, 'update') as update_mock:
+        mock_id = 'some-value'
+        mock_db = MagicMock()
+        mock_service = {
+          'targets': [],
+        }
+        get_by_id_mock.return_value = mock_service
+        await Service.advance_target(mock_id, mock_db)
+        update_mock.assert_not_awaited()
+
+        mock_service = {
+          'targets': [
+            'some-value',
+            'some-value'
+          ],
+          'cur_target_index': 0
+        }
+        get_by_id_mock.return_value = mock_service
+        await Service.advance_target(mock_id, mock_db)
+        update_mock.assert_called()
+        expect(update_mock.call_args[0][0]).to(equal(mock_id))
+        expect(update_mock.call_args[0][1]['cur_target_index']).to(be_above(mock_service['cur_target_index']))
+        expect(update_mock.call_args[0][2]).to(equal(mock_db))
+
+        mock_service = {
+          'targets': [
+            'some-value',
+            'some-value'
+          ],
+          'cur_target_index': 1
+        }
+        get_by_id_mock.return_value = mock_service
+        await Service.advance_target(mock_id, mock_db)
+        update_mock.assert_called()
+        expect(update_mock.call_args[0][0]).to(equal(mock_id))
+        expect(update_mock.call_args[0][1]['cur_target_index']).to(be_below(mock_service['cur_target_index']))
+        expect(update_mock.call_args[0][2]).to(equal(mock_db))
+  
+  @pytest.mark.asyncio
   async def test_get_all(self, *args):
     mock_db = MagicMock()
     mock_db.find = CoroutineMock()
     await Service.get_all(mock_db)
-    mock_db.find.assert_called()
+    mock_db.find.assert_called_with({})
   
   @pytest.mark.asyncio
   async def test_remove(self, *args):

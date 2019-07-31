@@ -21,7 +21,7 @@ async def get_handler(request: web.Request):
       response = await RequestValidator.get_by_method(method, DB.get(request, table))
     elif 'endpoint' in request.rel_url.query:
       path = request.rel_url.query['endpoint']
-      response = await RequestValidator.get_by_path(path, DB.get(request, table))
+      response = await RequestValidator.get_by_endpoint(path, DB.get(request, table))
     else:
       response = await RequestValidator.get_all(DB.get(request, table))
     return web.json_response({
@@ -47,8 +47,10 @@ async def create_handler(request: web.Request):
 @router.put('/request_validator')
 async def update_handler(request: web.Request):
   try:
-    body = json.loads(await request.text())
     id = request.rel_url.query['id']
+    body = json.loads(await request.text())
+    Validate.object_id(id)
+    Validate.schema(body, request_validator)
     await RequestValidator.update(id, body, DB.get(request, table))
     return web.json_response({
       'message': 'request validation updated',
@@ -58,14 +60,10 @@ async def update_handler(request: web.Request):
     return Error.handle(err)
         
 @router.delete('/request_validator')
-async def delete(request: web.Request):
+async def delete_handler(request: web.Request):
   try:
     id = request.rel_url.query.get('id')
-    if id is None:
-        raise Exception({
-          'message': 'Id not provided',
-          'status_code': 400
-        })
+    Validate.object_id(id)
     await RequestValidator.delete(id, DB.get(request, table))
     return web.json_response({
       'message': 'request validation deleted',

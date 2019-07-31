@@ -7,9 +7,15 @@ event_schema = {
   'circuit_breaker_id': {
     'type': 'string'
   },
-  # 'events': {
-  #   'type': 'list',
-  # }
+  'target': {
+    'type': 'string'
+  },
+  'body': {
+    'type': 'dict'
+  },
+  'headers': {
+    'type': 'dict'
+  }
 }
 
 event_validator = Validator(event_schema)

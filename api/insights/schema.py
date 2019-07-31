@@ -6,6 +6,7 @@ insights_schema = {
   },
   'method': {
     'type': 'string',
+    'allowed': ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATH']
   },
   'service_id': {
     'type': 'string'
@@ -14,7 +15,12 @@ insights_schema = {
     'type': 'string'
   },
   'remote_ip': {
-    'type': 'string'
+    'type': 'string',
+    'regex': r'^{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+  },
+  'scheme': {
+    'type': 'string',
+    'allowed': ['http', 'https', 'ws']
   },
   'status_code': {
     'type': 'integer'

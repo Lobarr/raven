@@ -4,8 +4,8 @@ import pydash
 from bson import json_util
 from aiohttp import web
 from .model import Admin
-from api.util import Error, Bson, DB
-
+from .schema import admin_validator
+from api.util import Error, Bson, DB, Validate
 
 router = web.RouteTableDef()
 table = 'admin'
@@ -14,9 +14,10 @@ table = 'admin'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
+    Validate.schema(ctx, admin_validator)
     await Admin.create(ctx, DB.get(request, table))
     return web.json_response({
-      'message': 'admin created',
+      'message': 'Ammin created',
     })
   except Exception as err:
     return Error.handle(err)
@@ -24,24 +25,22 @@ async def post_handler(request: web.Request):
 @router.get('/admin')
 async def get_handler(request: web.Request):
   try:
+    admins = None
     if len(request.rel_url.query.keys()) == 0:
       admins = await Admin.get_all(DB.get(request, table))
-      return web.json_response({
-        'data': Bson.to_json(admins),
-        'status_code': 200
-      })
     else:
       admins = None
       if 'id' in request.rel_url.query:
+        Validate.object_id(request.rel_url.query.get('id'))
         admins = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
       elif 'email' in request.rel_url.query:
         admins = await Admin.get_by_email(request.rel_url.query.get('email'), DB.get(request, table))
       elif 'username' in request.rel_url.query:
         admins = await Admin.get_by_username(request.rel_url.query.get('username'), DB.get(request, table))
-      return web.json_response({
-        'data': Bson.to_json(admins),
-        'status_code': 200
-      })
+    return web.json_response({
+      'data': Bson.to_json(admins),
+      'status_code': 200
+    })
   except Exception as err:
     return Error.handle(err)
 
@@ -49,15 +48,12 @@ async def get_handler(request: web.Request):
 async def put_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    admin_id = ctx['id']
-    if admin_id is None:
-      raise Exception({
-        'message': 'id not provided',
-        'status_code': 400
-      })
-    await Admin.update(admin_id, pydash.omit(ctx, 'id'), DB.get(request, table))
+    admin_id = request.rel_url.query['id']
+    Validate.schema(ctx, admin_validator)
+    Validate.object_id(admin_id)
+    await Admin.update(admin_id, ctx, DB.get(request, table))
     return web.json_response({
-      'message': 'admin updated',
+      'message': 'Admin updated',
     })
   except Exception as err:
     return Error.handle(err)
@@ -65,15 +61,10 @@ async def put_handler(request: web.Request):
 @router.delete('/admin')
 async def delete_handler(request: web.Request):
   try:
-    id = request.rel_url.query.get('id')
-    if id is None:
-      raise Exception({
-        'message': 'Id not provided',
-        'status_code': 400
-      })
-    await Admin.remove(id, DB.get(request, table))
+    Validate.object_id(request.rel_url.query.get('id'))
+    await Admin.remove(request.rel_url.query.get('id'), DB.get(request, table))
     return web.json_response({
-      'message': 'admin deleted'
+      'message': 'Admin deleted'
     })
   except Exception as err:
     return Error.handle(err)

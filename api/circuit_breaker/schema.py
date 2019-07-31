@@ -1,6 +1,6 @@
 from cerberus import Validator
 
-circuitBreaker_schema = {
+circuit_breaker_schema = {
   '_id': {
     'type': 'string'
   },
@@ -23,7 +23,7 @@ circuitBreaker_schema = {
   'path': {
     'type': 'string'
   },
-  'threshold_percent': {
+  'threshold': {
     'type': 'float',
     'min': '0.0',
     'max': '1.0'
@@ -36,4 +36,4 @@ circuitBreaker_schema = {
   }
 }
 
-circuitBreaker_validator = Validator(circuitBreaker_schema)
+circuit_breaker_validator = Validator(circuit_breaker_schema)

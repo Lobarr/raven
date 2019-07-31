@@ -37,8 +37,10 @@ request_validator_schema = {
         'non_letters_count': {
             'type': 'integer',
         }, 
-        'strength_percentage': {
-          'type': 'float'
+        'strength': {
+          'type': 'float',
+          'min': '0.0',
+          'max': '1.0'
         }
     }
   },
