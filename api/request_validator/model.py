@@ -21,7 +21,7 @@ class RequestValidator:
 		await request_validator_db.insert_one(ctx)
 
 	@staticmethod
-	async def update(id, ctx, db):
+	async def update(request_validator_id, ctx, db):
 		"""
 		Updates a request validation entry.
 
@@ -30,7 +30,7 @@ class RequestValidator:
 		@param db: (object) db connection
 		"""
 
-		await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
+		await db.update_one({'_id': bson.ObjectId(request_validator_id)}, {'$set': ctx})
         
 	@staticmethod
 	async def delete(id, db):
