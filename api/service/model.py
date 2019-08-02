@@ -22,18 +22,18 @@ class Service:
   
   @staticmethod
   async def get_by_state(state: str, db):
-    res = await db.find({'state': state})
-    return res.to_list(100)
+    res = db.find({'state': state})
+    return await res.to_list(100)
 
   @staticmethod
   async def get_by_secure(secure: bool, db):
-    res = await db.find({'secure': secure})
-    return res.to_list(100)
+    res = db.find({'secure': secure})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_all(db):
-    res = await db.find({})
-    return res.to_list(100)
+    res = db.find({})
+    return await res.to_list(100)
   
   @staticmethod
   async def remove(id: str, db):
@@ -74,3 +74,13 @@ class Service:
   @staticmethod
   async def remove_blacklist(id: str, host: str, db):
     await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'blacklisted_hosts': host}})
+
+  @staticmethod
+  async def check_exists(service_id, db):
+    service = await Service.get_by_id(service_id, db)
+    print(service_id, service)
+    if service is None:
+      raise Exception({
+        'message': 'Service id provided does not exist',
+        'status_code': 400
+      })

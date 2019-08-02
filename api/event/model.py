@@ -6,13 +6,16 @@ from typing import Optional
 from aiohttp.client import ClientSession
 from api.event import event_schema, event_validator
 from api.util import Validate
+from api.circuit_breaker import CircuitBreaker
 
 collection_name = 'event'
 
 class Event:
   @staticmethod
-  async def create(ctx: object, db):
-    await db.insert_one(ctx)
+  async def create(ctx: object, event_db, circuit_breaker_db):
+    if 'circuit_breaker_id' in ctx:
+      await CircuitBreaker.check_exists(ctx['circuit_breaker_id'], circuit_breaker_db)
+    await event_db.insert_one(ctx)
   
   @staticmethod
   async def update(id: str, ctx: object, db):
@@ -24,18 +27,18 @@ class Event:
   
   @staticmethod
   async def get_by_circuit_breaker_id(id: str, db):
-    res = await db.find({'circuit_breaker_id': id})
-    return res.to_list(100)
+    res = db.find({'circuit_breaker_id': id})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_by_target(target: str, db):
-    res = await db.find({'target': target})
-    return res.to_list(100)
+    res = db.find({'target': target})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_all(db):
-    res = await db.find({})
-    return res.to_list(100)
+    res = db.find({})
+    return await res.to_list(100)
   
   @staticmethod
   async def remove(id: str, db):

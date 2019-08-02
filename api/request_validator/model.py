@@ -1,5 +1,7 @@
 import asyncio
 import bson
+from api.service import Service
+from api.util import DB
 from motor.motor_asyncio import AsyncIOMotorClient
 from cerberus import Validator
 from .schema import request_validator_schema, request_validator
@@ -7,17 +9,19 @@ from password_strength import PasswordPolicy, PasswordStats
 
 class RequestValidator:
 	@staticmethod
-	async def create(ctx, db):
+	async def create(ctx, request_validator_db, service_db):
 		"""
 		Creates a request validation entry.
 
 		@param document: (object) document to be inserted
 		@param db: (object) db connection
 		"""
-		await db.insert_one(ctx)
+		if 'service_id' in ctx:
+			await Service.check_exists(ctx['service_id'], service_db)
+		await request_validator_db.insert_one(ctx)
 
 	@staticmethod
-	async def update(id, ctx, db):
+	async def update(request_validator_id, ctx, db):
 		"""
 		Updates a request validation entry.
 
@@ -26,7 +30,7 @@ class RequestValidator:
 		@param db: (object) db connection
 		"""
 
-		await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
+		await db.update_one({'_id': bson.ObjectId(request_validator_id)}, {'$set': ctx})
         
 	@staticmethod
 	async def delete(id, db):
@@ -47,8 +51,12 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: the documents with the provided serviceId
 		"""
-		res = await db.find({})
-		return res.to_list(100)
+		res = db.find({})
+		return await res.to_list(100)
+	
+	@staticmethod
+	async def get_by_id(id, db):
+		return await db.find_one({'_id': bson.ObjectId(id)})
 
 	@staticmethod
 	async def get_by_service_id(service_id, db):
@@ -59,8 +67,8 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: the documents with the provided serviceId
 		"""
-		res = await db.find({"service_id": service_id})
-		return res.to_list(100)
+		res = db.find({"service_id": service_id})
+		return await res.to_list(100)
 	
 	@staticmethod
 	async def get_by_method(method, db):
@@ -71,8 +79,8 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: the documents using the provided method
 		"""
-		res = await db.find({"method": method})
-		return res.to_list(100)
+		res = db.find({"method": method})
+		return await res.to_list(100)
 	
 	@staticmethod
 	async def get_by_endpoint(endpoint, db):
@@ -83,8 +91,8 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: the documents with the provided path
 		"""
-		res = await db.find({"endpoint": endpoint})
-		return res.to_list(100)
+		res = db.find({"endpoint": endpoint})
+		return await res.to_list(100)
 
 	@staticmethod
 	async def validate_schema(request_body, schema):

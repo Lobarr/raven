@@ -2,6 +2,7 @@ import pytest
 import asyncio
 import mock
 import asynctest
+from motor.motor_asyncio import AsyncIOMotorCursor
 from mock import patch, MagicMock
 from asynctest import CoroutineMock
 from expects import expect, equal, raise_error, be_an, have_keys, be_above, be_below
@@ -47,22 +48,28 @@ class TestService:
   @pytest.mark.asyncio
   async def test_get_by_state(self, *args):
     mock_state = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
-    mock_db.find.return_value = MagicMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Service.get_by_state(mock_state, mock_db)
     mock_db.find.assert_called()    
-    mock_db.find.assert_awaited_with({'state': mock_state})
+    mock_db.find.assert_called_with({'state': mock_state})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_secure(self, *args):
     mock_secure = True
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
-    mock_db.find.return_value = MagicMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Service.get_by_secure(mock_secure, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'secure': mock_secure})
+    mock_db.find.assert_called_with({'secure': mock_secure})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_advance_target(self, *args):
@@ -107,10 +114,14 @@ class TestService:
   
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Service.get_all(mock_db)
     mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_remove(self, *args):
@@ -193,3 +204,14 @@ class TestService:
       mock_db.update_one.assert_called()
       object_id_mock.assert_called_with(mock_id)
       expect(mock_db.update_one.call_args[0][1]['$pull']['blacklisted_hosts']).to(equal(mock_host))
+
+  @pytest.mark.asyncio
+  async def test_check_exists(self, *args):
+    with asynctest.patch.object(Service, 'get_by_id') as get_mock:
+      try:
+        mock_id = 'some-value'
+        mock_db = MagicMock()
+        await Service.check_exists(mock_id, mock_db)
+        get_mock.assert_called()
+      except Exception as err:
+        expect(err.args[0]).to(have_keys('message', 'status_code'))

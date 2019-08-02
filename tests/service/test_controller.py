@@ -9,27 +9,31 @@ from api.service import Service, service_validator
 from api.util import DB, Error, Validate, Bson
 from api.service.controller import post_handler, get_handler, table, put_handler, delete_handler
 
-class TestSericeController:
+class TestServiceController:
   @pytest.mark.asyncio
   async def test_post_handler(self, *args):
-    with patch.object(DB, 'get') as get_mock:
-      with patch('json.loads') as loads_mock:
-        with patch.object(Service, 'create') as create_mock:
-          with patch.object(Error, 'handle') as handle_mock:
-            with patch.object(Validate, 'schema') as validate_mock:
-              mock_req = MagicMock()
-              mock_req.text = CoroutineMock()
-              await post_handler(mock_req)
-              mock_req.text.assert_called()
-              loads_mock.assert_called()
-              validate_mock.assert_called()
-              get_mock.assert_called_with(mock_req, table)
-              create_mock.assert_called()
-              
-              mock_err = Exception()
-              create_mock.side_effect = mock_err
-              await post_handler(mock_req)
-              handle_mock.assert_called_with(mock_err)
+    with patch.object(service_validator, 'normalized') as normalized_mock:
+      with patch.object(DB, 'get') as get_mock:
+        with patch('json.loads') as loads_mock:
+          with patch.object(Service, 'create') as create_mock:
+            with patch.object(Error, 'handle') as handle_mock:
+              with patch.object(Validate, 'schema') as validate_mock:
+                mock_req = MagicMock()
+                mock_test = CoroutineMock()
+                mock_req.text = mock_test
+                loads_mock.return_value = mock_test
+                await post_handler(mock_req)
+                mock_req.text.assert_called()
+                loads_mock.assert_called()
+                validate_mock.assert_called()
+                get_mock.assert_called_with(mock_req, table)
+                create_mock.assert_called()
+                normalized_mock.assert_called_with(mock_test)
+                
+                mock_err = Exception()
+                create_mock.side_effect = mock_err
+                await post_handler(mock_req)
+                handle_mock.assert_called_with(mock_err)
 
   @pytest.mark.asyncio
   async def test_put_handler(self, *args):

@@ -17,7 +17,7 @@ async def post_handler(request: web.Request):
     Validate.schema(ctx, admin_validator)
     await Admin.create(ctx, DB.get(request, table))
     return web.json_response({
-      'message': 'Ammin created',
+      'message': 'Admin created',
     })
   except Exception as err:
     return Error.handle(err)
@@ -29,16 +29,18 @@ async def get_handler(request: web.Request):
     if len(request.rel_url.query.keys()) == 0:
       admins = await Admin.get_all(DB.get(request, table))
     else:
-      admins = None
+      admins = []
       if 'id' in request.rel_url.query:
         Validate.object_id(request.rel_url.query.get('id'))
-        admins = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+        admin = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+        if admin is not None:
+          admins.append(admin)
       elif 'email' in request.rel_url.query:
         admins = await Admin.get_by_email(request.rel_url.query.get('email'), DB.get(request, table))
       elif 'username' in request.rel_url.query:
         admins = await Admin.get_by_username(request.rel_url.query.get('username'), DB.get(request, table))
     return web.json_response({
-      'data': Bson.to_json(admins),
+      'data': DB.format_documents(Bson.to_json(admins)),
       'status_code': 200
     })
   except Exception as err:

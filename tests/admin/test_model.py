@@ -25,16 +25,24 @@ class TestAdmin:
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
-      mock_id = 'some-value'
-      bson_object_id_mock.return_value = mock_id  
-      mock_ctx = {}
-      mock_db = MagicMock()
-      mock_db.update_one = CoroutineMock()
+      with patch.object(Password, 'hash') as hash_mock:
+        mock_id = 'some-value'
+        bson_object_id_mock.return_value = mock_id  
+        mock_ctx = {}
+        mock_db = MagicMock()
+        mock_db.update_one = CoroutineMock()
 
-      await Admin.update(mock_id, mock_ctx, mock_db)
-      mock_db.update_one.assert_called()
-      bson_object_id_mock.assert_called_with(mock_id)
-      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
+        await Admin.update(mock_id, mock_ctx, mock_db)
+        mock_db.update_one.assert_called()
+        bson_object_id_mock.assert_called_with(mock_id)
+        expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
+
+        mock_ctx = {
+          'password': 'some-value'
+        }
+        hash_mock.return_value = mock_ctx['password']
+        await Admin.update(mock_id, mock_ctx, mock_db)
+        hash_mock.assert_called_with(mock_ctx['password'])
   
   @pytest.mark.asyncio
   async def test_get_by_id(self, *args):
@@ -60,28 +68,40 @@ class TestAdmin:
 
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Admin.get_all(mock_db)
     mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_email(self, *args):
     mock_email = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Admin.get_by_email(mock_email, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'email': mock_email})
+    mock_db.find.assert_called_with({'email': mock_email})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_username(self, *args):
     mock_username = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Admin.get_by_username(mock_username, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'username': mock_username})
+    mock_db.find.assert_called_with({'username': mock_username})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_verify_password(self, *args):
