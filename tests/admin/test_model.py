@@ -25,16 +25,24 @@ class TestAdmin:
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
-      mock_id = 'some-value'
-      bson_object_id_mock.return_value = mock_id  
-      mock_ctx = {}
-      mock_db = MagicMock()
-      mock_db.update_one = CoroutineMock()
+      with patch.object(Password, 'hash') as hash_mock:
+        mock_id = 'some-value'
+        bson_object_id_mock.return_value = mock_id  
+        mock_ctx = {}
+        mock_db = MagicMock()
+        mock_db.update_one = CoroutineMock()
 
-      await Admin.update(mock_id, mock_ctx, mock_db)
-      mock_db.update_one.assert_called()
-      bson_object_id_mock.assert_called_with(mock_id)
-      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
+        await Admin.update(mock_id, mock_ctx, mock_db)
+        mock_db.update_one.assert_called()
+        bson_object_id_mock.assert_called_with(mock_id)
+        expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
+
+        mock_ctx = {
+          'password': 'some-value'
+        }
+        hash_mock.return_value = mock_ctx['password']
+        await Admin.update(mock_id, mock_ctx, mock_db)
+        hash_mock.assert_called_with(mock_ctx['password'])
   
   @pytest.mark.asyncio
   async def test_get_by_id(self, *args):

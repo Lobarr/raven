@@ -6,6 +6,7 @@ from aiohttp import web
 from .model import CircuitBreaker
 from .schema import circuit_breaker_validator
 from api.util import Error, Bson, DB, Validate
+from api.service import controller
 
 
 router = web.RouteTableDef()
@@ -16,7 +17,7 @@ async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     Validate.schema(ctx, circuit_breaker_validator)
-    await CircuitBreaker.create(circuit_breaker_validator.normalized(ctx), DB.get(request, table))
+    await CircuitBreaker.create(circuit_breaker_validator.normalized(ctx), DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Circuit breaker created',
       'status_code': 200

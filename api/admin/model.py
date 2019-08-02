@@ -16,6 +16,8 @@ class Admin:
 
   @staticmethod
   async def update(id: str, ctx: object, db):
+    if 'password' in ctx:
+      ctx['password'] = Password.hash(ctx['password'])
     await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
   
   @staticmethod
