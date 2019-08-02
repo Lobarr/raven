@@ -55,52 +55,76 @@ class TestCircuitBreaker:
 
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_all(mock_db)
     mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_service_id(self, *args):
     mock_service_id = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_by_service_id(mock_service_id, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'service_id': mock_service_id})
+    mock_db.find.assert_called_with({'service_id': mock_service_id})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_status_code(self, *args):
     mock_status_code = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_by_status_code(mock_status_code, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'status_code': mock_status_code})
+    mock_db.find.assert_called_with({'status_code': mock_status_code})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_method(self, *args):
     mock_method = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_by_method(mock_method, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'method': mock_method})
+    mock_db.find.assert_called_with({'method': mock_method})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_path(self, *args):
     mock_path = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_by_path(mock_path, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'path': mock_path})
+    mock_db.find.assert_called_with({'path': mock_path})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_threshold(self, *args):
     mock_thresold = 0.0
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await CircuitBreaker.get_by_threshold(mock_thresold, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'threshold': mock_thresold})
+    mock_db.find.assert_called_with({'threshold': mock_thresold})
+    mock_cursor.to_list.assert_called()

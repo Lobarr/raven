@@ -3,7 +3,6 @@ import asyncio
 import aioredis
 from celery import Celery
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import MongoClient
 import logging
 import aiohttp_cors
 from aiohttp import web

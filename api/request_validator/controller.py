@@ -5,6 +5,7 @@ from bson import json_util
 from .model import RequestValidator
 from .schema import request_validator
 from api.util import Error, Bson, DB, Validate
+from api.service import Service
 
 router = web.RouteTableDef()
 table = 'request_validator'
@@ -12,10 +13,16 @@ table = 'request_validator'
 @router.get('/request_validator')
 async def get_handler(request: web.Request):
   try:
+    response = []
     if 'service_id' in request.rel_url.query:
       Validate.object_id(request.rel_url.query['service_id'])
       service_id = request.rel_url.query['service_id']
       response = await RequestValidator.get_by_service_id(service_id, DB.get(request, table))
+    elif 'id' in request.rel_url.query:
+      Validate.object_id(request.rel_url.query.get('id'))
+      req_validator = await RequestValidator.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+      if req_validator != None:
+        response.append(req_validator)
     elif 'method' in request.rel_url.query:
       method = request.rel_url.query['method']
       response = await RequestValidator.get_by_method(method, DB.get(request, table))
@@ -36,7 +43,7 @@ async def create_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
     Validate.schema(body, request_validator)
-    await RequestValidator.create(body, DB.get(request, table))
+    await RequestValidator.create(request_validator.normalized(body), DB.get(request, table))
     return web.json_response({
         'message': 'Created request validation',
         'status_code': 200
@@ -53,7 +60,7 @@ async def update_handler(request: web.Request):
     Validate.schema(body, request_validator)
     await RequestValidator.update(id, body, DB.get(request, table))
     return web.json_response({
-      'message': 'request validation updated',
+      'message': 'request validator updated',
       'status_code': 200
     })
   except Exception as err:
@@ -66,7 +73,7 @@ async def delete_handler(request: web.Request):
     Validate.object_id(id)
     await RequestValidator.delete(id, DB.get(request, table))
     return web.json_response({
-      'message': 'request validation deleted',
+      'message': 'request validator deleted',
       'statusCode': 200
     })
   except Exception as err:

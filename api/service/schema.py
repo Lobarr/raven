@@ -8,22 +8,30 @@ service_schema = {
     'type': 'string',
   },
   'state': {
-    'type': 'string'
+    'type': 'string',
+    'allowed': ['DOWN', 'UP', 'OFF'],
+    'default': 'OFF'
   },
   'secure': {
-    'type': 'boolean'
+    'type': 'boolean',
+    'default': False
   },
   'targets': {
-    'type': 'list'
+    'type': 'list',
+    'default': []
   },
   'cur_target_index': {
-    'type': 'integer'
+    'type': 'integer',
+    'default': 0,
+    'dependencies': 'targets'
   },
   'whitelisted_hosts': {
-    'type': 'list'
+    'type': 'list',
+    'default': []
   },
   'blacklisted_hosts': {
-    'type': 'list'
+    'type': 'list',
+    'default': []
   },
   'public_key': {
     'type': 'string'

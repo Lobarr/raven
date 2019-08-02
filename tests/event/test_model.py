@@ -55,28 +55,40 @@ class TestEvent:
 
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Event.get_all(mock_db)
     mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_circuit_breaker_id(self, *args):
     mock_circuit_breaker_mock = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Event.get_by_circuit_breaker_id(mock_circuit_breaker_mock, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'circuit_breaker_id': mock_circuit_breaker_mock})
+    mock_db.find.assert_called_with({'circuit_breaker_id': mock_circuit_breaker_mock})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_target(self, *args):
     mock_target = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Event.get_by_target(mock_target, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'target': mock_target})
+    mock_db.find.assert_called_with({'target': mock_target})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_handle_event(self, *args):

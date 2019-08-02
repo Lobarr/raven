@@ -24,13 +24,13 @@ class Admin:
 
   @staticmethod
   async def get_by_email(email: str, db):
-    res = await db.find({'email': email})
-    return res.to_list(100)
+    res = db.find({'email': email})
+    return await res.to_list(100)
     
   @staticmethod 
   async def get_by_username(username: str, db):
-    res = await db.find({'username': username})
-    return res.to_list(100)
+    res = db.find({'username': username})
+    return await res.to_list(100)
 
   @staticmethod 
   async def verify_password(username: str, password: str, db):
@@ -40,8 +40,8 @@ class Admin:
 
   @staticmethod
   async def get_all(db):
-    res = await db.find({})
-    return res.to_list(100) 
+    res = db.find({})
+    return await res.to_list(100) 
 
   @staticmethod
   async def count(db):

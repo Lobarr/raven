@@ -24,18 +24,18 @@ class Event:
   
   @staticmethod
   async def get_by_circuit_breaker_id(id: str, db):
-    res = await db.find({'circuit_breaker_id': id})
-    return res.to_list(100)
+    res = db.find({'circuit_breaker_id': id})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_by_target(target: str, db):
-    res = await db.find({'target': target})
-    return res.to_list(100)
+    res = db.find({'target': target})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_all(db):
-    res = await db.find({})
-    return res.to_list(100)
+    res = db.find({})
+    return await res.to_list(100)
   
   @staticmethod
   async def remove(id: str, db):

@@ -18,33 +18,33 @@ class CircuitBreaker:
   
   @staticmethod
   async def get_by_service_id(service_id: str, db):
-    res = await db.find({'service_id': service_id})
-    return res.to_list(100)
+    res = db.find({'service_id': service_id})
+    return await res.to_list(100)
 
   @staticmethod
   async def get_by_status_code(status_code: int, db):
-    res = await db.find({'status_code': status_code})
-    return res.to_list(100)
+    res = db.find({'status_code': status_code})
+    return await res.to_list(100)
   
   @staticmethod
   async def get_by_method(method: str, db):
-    res = await db.find({'method': method})
-    return res.to_list(100)
+    res = db.find({'method': method})
+    return await res.to_list(100)
 
   @staticmethod
   async def get_by_path(path: str, db):
-    res = await db.find({'path': path})
-    return res.to_list(100)
+    res = db.find({'path': path})
+    return await res.to_list(100)
 
   @staticmethod
   async def get_by_threshold(threshold: float, db):
-    res = await db.find({'threshold': threshold})
-    return res.to_list(100)
+    res = db.find({'threshold': threshold})
+    return await res.to_list(100)
 
   @staticmethod
   async def get_all(db):
-    res = await db.find({})
-    return res.to_list(100)
+    res = db.find({})
+    return await res.to_list(100)
 
   @staticmethod
   async def remove(id: str, db):

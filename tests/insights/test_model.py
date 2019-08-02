@@ -43,34 +43,46 @@ class TestInsights:
 
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_all(mock_db)
     mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_service_id(self, *args):
     mock_service_id = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_service_id(mock_service_id, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'service_id': mock_service_id})
+    mock_db.find.assert_called_with({'service_id': mock_service_id})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_scheme(self, *args):
     mock_remote_ip = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_scheme(mock_remote_ip, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'scheme': mock_remote_ip})
+    mock_db.find.assert_called_with({'scheme': mock_remote_ip})
+    mock_cursor.to_list.assert_called()
 
   @pytest.mark.asyncio
   async def test_get_by_id(self, *args):
     with patch('bson.ObjectId') as object_id_mock:
       mock_id = 'some-value'
-      mock_db = MagicMock()
+      mock_db = CoroutineMock()
       mock_db.find_one = CoroutineMock()
       object_id_mock.return_value = mock_id
       await Insights.get_by_id(mock_id, mock_db)
@@ -81,37 +93,53 @@ class TestInsights:
   @pytest.mark.asyncio
   async def test_get_by_remote_ip(self, *args):
     mock_remote_ip = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_remote_ip(mock_remote_ip, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'remote_ip': mock_remote_ip})
+    mock_db.find.assert_called_with({'remote_ip': mock_remote_ip})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_status_code(self, *args):
     mock_status_code = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_status_code(mock_status_code, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'status_code': mock_status_code})
+    mock_db.find.assert_called_with({'status_code': mock_status_code})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_path(self, *args):
     mock_path = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_path(mock_path, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'path': mock_path})
+    mock_db.find.assert_called_with({'path': mock_path})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_method(self, *args):
     mock_method = 'some-value'
-    mock_db = MagicMock()
-    mock_db.find = CoroutineMock()
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
     await Insights.get_by_method(mock_method, mock_db)
     mock_db.find.assert_called()
-    mock_db.find.assert_awaited_with({'method': mock_method})
+    mock_db.find.assert_called_with({'method': mock_method})
+    mock_cursor.to_list.assert_called()
   
 

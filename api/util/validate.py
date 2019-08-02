@@ -14,5 +14,6 @@ class Validate:
     if not schema.validate(ctx):
       raise Exception({
         'message': 'Invalid data provided',
-        'status_code': 400
+        'status_code': 400,
+        'errors': schema.errors
       })

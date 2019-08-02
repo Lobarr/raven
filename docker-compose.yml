@@ -42,11 +42,11 @@ services:
       - 3001:3001
     networks:
       - backend
-  frontend:
-    build: ./client
-    ports:
-      - 3000:3000
-    volumes:
-      - ./client:/client
-    depends_on:
-      - backend
+  # frontend:
+  #   build: ./client
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./client:/client
+  #   depends_on:
+  #     - backend
