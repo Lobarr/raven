@@ -76,8 +76,9 @@ class Service:
     await db.update_one({'_id': bson.ObjectId(id)}, {'$pull': {'blacklisted_hosts': host}})
 
   @staticmethod
-  async def check_exists(id, db):
-    service = await Service.get_by_id(id, db)
+  async def check_exists(service_id, db):
+    service = await Service.get_by_id(service_id, db)
+    print(service_id, service)
     if service == None:
       raise Exception({
         'message': 'Service id provided does not exist',

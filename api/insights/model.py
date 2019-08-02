@@ -1,12 +1,15 @@
 import bson
 from api.insights.schema import insights_schema, insights_validator
+from api.service import Service
 
 collection_name = 'insights'
 
 class Insights:
   @staticmethod
-  async def create(ctx: object, db):
-    await db.insert_one(ctx)
+  async def create(ctx: object, insights_db, service_db):
+    if 'service_id' in ctx:
+      await Service.check_exists(ctx['service_id'], service_db)
+    await insights_db.insert_one(ctx)
 
   @staticmethod
   async def update(id: str, ctx: object, db):

@@ -6,13 +6,16 @@ from typing import Optional
 from aiohttp.client import ClientSession
 from api.event import event_schema, event_validator
 from api.util import Validate
+from api.circuit_breaker import CircuitBreaker
 
 collection_name = 'event'
 
 class Event:
   @staticmethod
-  async def create(ctx: object, db):
-    await db.insert_one(ctx)
+  async def create(ctx: object, event_db, circuit_breaker_db):
+    if 'circuit_breaker_id' in ctx:
+      await CircuitBreaker.check_exists(ctx['circuit_breaker_id'], circuit_breaker_db)
+    await event_db.insert_one(ctx)
   
   @staticmethod
   async def update(id: str, ctx: object, db):

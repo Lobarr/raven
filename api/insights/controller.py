@@ -5,6 +5,7 @@ from aiohttp import web
 from .schema import insights_validator
 from .model import Insights
 from api.util import Error, Bson, DB, Validate
+from api.service import controller
 
 router = web.RouteTableDef()
 table = 'insights'
@@ -14,7 +15,7 @@ async def post_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
     Validate.schema(body, insights_validator)
-    await Insights.create(body, DB.get(request, table))
+    await Insights.create(body, DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Insight created',
       'status_code': 200
@@ -28,9 +29,11 @@ async def get_handler(request: web.Request):
     if len(request.rel_url.query.keys()) == 0:
       insights = await Insights.get_all(DB.get(request, table))
     else:
-      insights = None
+      insights = []
       if 'id' in request.rel_url.query:
-        insights = await Insights.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+        insight = await Insights.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+        if insight != None:
+          insights.append(insight)
       elif 'remote_ip' in request.rel_url.query:
         insights = await Insights.get_by_remote_ip(request.rel_url.query.get('remote_ip'), DB.get(request, table))
       elif 'status_code' in request.rel_url.query:
@@ -44,7 +47,7 @@ async def get_handler(request: web.Request):
       elif 'scheme' in request.rel_url.query:
         insights = await Insights.get_by_scheme(request.rel_url.query.get('scheme'), DB.get(request, table))
     return web.json_response({
-        'data': Bson.to_json(insights),
+        'data': DB.format_documents(Bson.to_json(insights)),
         'status_code': 200
       })
   except Exception as err:

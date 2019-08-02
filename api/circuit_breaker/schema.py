@@ -1,4 +1,5 @@
 from cerberus import Validator
+from api.util  import Bson
 
 circuit_breaker_schema = {
   '_id': {
@@ -9,30 +10,36 @@ circuit_breaker_schema = {
     'allowed': ['BROKEN', 'ON', 'OFF']
   },
   'service_id': {
-    'type': 'string'
+    'type': 'string',
+    'check_with': Bson.validate_schema_id
   },
   'cooldown': {
-    'type': 'integer'
+    'type': 'integer',
+    'min': 0
   },
   'status_code': {
     'type': 'integer'
   },
   'method': {
-    'type': 'string'
+    'type': 'string',
+    'allowed': ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATH']
   },
   'path': {
     'type': 'string'
   },
   'threshold': {
     'type': 'float',
-    'min': '0.0',
-    'max': '1.0'
+    'min': 0.0,
+    'max': 1.0
   },
   'period': {
-    'type': 'integer'
+    'type': 'integer',
+    'min': 0,
+    'default': 60
   },
   'tripped_count': {
-    'type': 'integer'
+    'type': 'integer',
+    'default': 0
   }
 }
 

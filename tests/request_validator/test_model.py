@@ -18,13 +18,13 @@ class TestRequestValidator:
       mock_ctx = {}
       mock_db = MagicMock()
       mock_db.insert_one = CoroutineMock()
-      await RequestValidator.create(mock_ctx, mock_db)
+      await RequestValidator.create(mock_ctx, mock_db, mock_db)
       mock_db.insert_one.assert_awaited_with(mock_ctx)
 
       mock_ctx = {
         'service_id': 'some-value'
       }
-      await RequestValidator.create(mock_ctx, mock_db)
+      await RequestValidator.create(mock_ctx, mock_db, mock_db)
       check_exists_mock.assert_called()
 
 

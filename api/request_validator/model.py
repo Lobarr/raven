@@ -1,6 +1,7 @@
 import asyncio
 import bson
 from api.service import Service
+from api.util import DB
 from motor.motor_asyncio import AsyncIOMotorClient
 from cerberus import Validator
 from .schema import request_validator_schema, request_validator
@@ -8,7 +9,7 @@ from password_strength import PasswordPolicy, PasswordStats
 
 class RequestValidator:
 	@staticmethod
-	async def create(ctx, db):
+	async def create(ctx, request_validator_db, service_db):
 		"""
 		Creates a request validation entry.
 
@@ -16,8 +17,8 @@ class RequestValidator:
 		@param db: (object) db connection
 		"""
 		if 'service_id' in ctx:
-			await Service.check_exists(ctx['service_id'], db)
-		await db.insert_one(ctx)
+			await Service.check_exists(ctx['service_id'], service_db)
+		await request_validator_db.insert_one(ctx)
 
 	@staticmethod
 	async def update(id, ctx, db):

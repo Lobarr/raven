@@ -1,12 +1,15 @@
 import bson
+from api.service import Service
 from api.circuit_breaker.schema import circuit_breaker_schema, circuit_breaker_validator
 
 table = 'circuitBreaker'
 
 class CircuitBreaker:
   @staticmethod
-  async def create(ctx: object, db):
-    await db.insert_one(ctx)  
+  async def create(ctx: object, circuit_breaker_db, service_db):
+    if 'service_id' in ctx:
+      await Service.check_exists(ctx['service_id'], service_db)
+    await circuit_breaker_db.insert_one(ctx)  
 
   @staticmethod
   async def update(id: str, ctx: object, db):
@@ -49,3 +52,12 @@ class CircuitBreaker:
   @staticmethod
   async def remove(id: str, db):
     await db.delete_one({'_id': bson.ObjectId(id)})
+
+  @staticmethod
+  async def check_exists(circuit_breaker_id, db):
+    circuit_breaker = await CircuitBreaker.get_by_id(circuit_breaker_id, db)
+    if circuit_breaker == None:
+      raise Exception({
+        'message': 'Circuit breaker id provided does not exist',
+        'status_code': 400
+      })

@@ -27,7 +27,7 @@ class TestRequstValidatorController:
                   mock_req.text.assert_called()
                   loads_mock.assert_called()
                   validate_mock.assert_called()
-                  get_mock.assert_called_with(mock_req, table)
+                  get_mock.assert_called()
                   create_mock.assert_called()
                   normalized_mock.assert_called_with(mock_text)
                   

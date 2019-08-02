@@ -6,16 +6,24 @@ from mock import patch, MagicMock
 from asynctest import CoroutineMock
 from expects import expect, equal, raise_error, be_an, have_keys
 from api.event import Event, event_validator
+from api.circuit_breaker import CircuitBreaker
 from api.util import Validate, Crypt
 
 class TestEvent:
   @pytest.mark.asyncio
   async def test_create(self, *args):
-    mock_ctx = {}
-    mock_db = MagicMock()
-    mock_db.insert_one = CoroutineMock()
-    await Event.create(mock_ctx, mock_db)
-    mock_db.insert_one.assert_awaited_with(mock_ctx)
+    with asynctest.patch.object(CircuitBreaker, 'check_exists') as check_exists_mock:
+      mock_ctx = {}
+      mock_db = MagicMock()
+      mock_db.insert_one = CoroutineMock()
+      await Event.create(mock_ctx, mock_db, mock_db)
+      mock_db.insert_one.assert_awaited_with(mock_ctx)
+
+      mock_ctx = {
+        'circuit_breaker_id': 'some-value'
+      }
+      await Event.create(mock_ctx, mock_db, mock_db)
+      check_exists_mock.assert_called()
 
   @pytest.mark.asyncio
   async def test_update(self, *args):

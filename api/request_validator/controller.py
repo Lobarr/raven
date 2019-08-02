@@ -5,7 +5,7 @@ from bson import json_util
 from .model import RequestValidator
 from .schema import request_validator
 from api.util import Error, Bson, DB, Validate
-from api.service import Service
+from api.service import Service, controller
 
 router = web.RouteTableDef()
 table = 'request_validator'
@@ -43,9 +43,9 @@ async def create_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
     Validate.schema(body, request_validator)
-    await RequestValidator.create(request_validator.normalized(body), DB.get(request, table))
+    await RequestValidator.create(request_validator.normalized(body), DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
-        'message': 'Created request validation',
+        'message': 'Request validator created',
         'status_code': 200
     })
   except Exception as err:
