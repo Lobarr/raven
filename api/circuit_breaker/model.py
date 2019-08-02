@@ -56,7 +56,7 @@ class CircuitBreaker:
   @staticmethod
   async def check_exists(circuit_breaker_id, db):
     circuit_breaker = await CircuitBreaker.get_by_id(circuit_breaker_id, db)
-    if circuit_breakeris None:
+    if circuit_breaker is None:
       raise Exception({
         'message': 'Circuit breaker id provided does not exist',
         'status_code': 400

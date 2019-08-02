@@ -79,7 +79,7 @@ class Service:
   async def check_exists(service_id, db):
     service = await Service.get_by_id(service_id, db)
     print(service_id, service)
-    if serviceis None:
+    if service is None:
       raise Exception({
         'message': 'Service id provided does not exist',
         'status_code': 400
