@@ -34,7 +34,7 @@ async def get_handler(request: web.Request):
       if 'id' in request.rel_url.query:
         Validate.object_id(request.rel_url.query.get('id'))
         service = await Event.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-        if service != None:
+        if service is not None:
           services.append(service)
       elif 'circuit_breaker_id' in request.rel_url.query:
         Validate.object_id(request.rel_url.query.get('circuit_breaker_id'))

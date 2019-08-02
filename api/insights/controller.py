@@ -32,7 +32,7 @@ async def get_handler(request: web.Request):
       insights = []
       if 'id' in request.rel_url.query:
         insight = await Insights.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-        if insight != None:
+        if insight is not None:
           insights.append(insight)
       elif 'remote_ip' in request.rel_url.query:
         insights = await Insights.get_by_remote_ip(request.rel_url.query.get('remote_ip'), DB.get(request, table))

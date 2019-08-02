@@ -33,7 +33,7 @@ async def get_handler(request: web.Request):
       if 'id' in request.rel_url.query:
         Validate.object_id(request.rel_url.query.get('id'))
         admin = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-        if admin != None:
+        if admin is not None:
           admins.append(admin)
       elif 'email' in request.rel_url.query:
         admins = await Admin.get_by_email(request.rel_url.query.get('email'), DB.get(request, table))

@@ -21,7 +21,7 @@ async def get_handler(request: web.Request):
     elif 'id' in request.rel_url.query:
       Validate.object_id(request.rel_url.query.get('id'))
       req_validator = await RequestValidator.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-      if req_validator != None:
+      if req_validator is not None:
         response.append(req_validator)
     elif 'method' in request.rel_url.query:
       method = request.rel_url.query['method']
