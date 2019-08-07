@@ -1,8 +1,5 @@
 import bson
 from api.service import Service
-from api.circuit_breaker.schema import circuit_breaker_schema, circuit_breaker_validator
-
-table = 'circuitBreaker'
 
 class CircuitBreaker:
   @staticmethod
