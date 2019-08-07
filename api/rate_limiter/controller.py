@@ -2,128 +2,145 @@ import json
 from aiohttp import web
 from bson import json_util
 from .model import RateLimiter
-from api.util import Error, Bson, DB, Redis
-import base64
+from .schema import rate_limit_entry_validator, rate_limit_rule_validator
+from api.util import Error, Bson, DB, Redis, Validate
 
 router = web.RouteTableDef()
 
-@router.get('/rateLimiter/rule')
+@router.get('/rate_limiter/rule')
 async def retrieve_rule(request: web.Request):
-    try:
-        # we want to identify the parameter which is used to identify the records
-        if 'path' in request.rel_url.query:
-            path = request.rel_url.query['path']
-            response = await RateLimiter.get_rules_by_path(path, DB.get_redis(request))
-        elif 'statusCode' in request.rel_url.query:
-            statusCode = request.rel_url.query['statusCode']
-            response = await RateLimiter.get_rules_by_status_code(statusCode, DB.get_redis(request))
-        else:
-            # fallback to get all if no param passed
-            response = await RateLimiter.get_all_rules(DB.get_redis(request))
-        results = await Redis.format_response(response)
-        return web.json_response({
-            'status_code': 200,
-            'data': results
-        }, status=200)
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		# we want to identify the parameter which is used to identify the records
+		response = []
+		if 'path' in request.rel_url.query:
+				path = request.rel_url.query.get('path')
+				response = await RateLimiter.get_rule_by_path(path, DB.get_redis(request))
+		elif 'status_code' in request.rel_url.query:
+				status_code = request.rel_url.query.get('status_code')
+				response = await RateLimiter.get_rule_by_status_code(status_code, DB.get_redis(request))
+		elif 'host' in request.rel_url.query:
+			host = request.rel_url.query.get('host')
+			response = await RateLimiter.get_rule_by_host(host, DB.get_redis(request))
+		elif 'id' in request.rel_url.query:
+			_id = request.rel_url.query.get('id')
+			Validate.object_id(_id)
+			rule = await RateLimiter.get_rule_by_id(_id, DB.get_redis(request))
+			if rule:
+				response.append(rule)
+		else:
+			# fallback to get all if no param passed
+			response = await RateLimiter.get_all_rules(DB.get_redis(request))
+		return web.json_response({
+				'data': response,
+				'status_code': 200
+		}, status=200)
+	except Exception as err:
+		return Error.handle(err)
         
-@router.post('/rateLimiter/rule')
+@router.post('/rate_limiter/rule')
 async def create_rule(request: web.Request):
-    try:
-        body = json.loads(await request.text())
-        data = await RateLimiter.create_rule(body, DB.get_redis(request))
-        return web.json_response({
-            'message': data,
-            'status_code': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
-        
-@router.put('/rateLimiter/rule')
+	try:
+		ctx = json.loads(await request.text())
+		Validate.schema(ctx, rate_limit_rule_validator)
+		await RateLimiter.create_rule(ctx, DB.get_redis(request))
+		return web.json_response({
+				'message': 'Created rate limiter rule',
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
+
+@router.patch('/rate_limiter/rule')
 async def update_rule(request: web.Request):
-    try:
-        # id is passed thru query params according to spec, data should be passed through request body
-        body = json.loads(await request.text())
-        id = request.rel_url.query['id']
-        await RateLimiter.update_rule(id, body, DB.get_redis(request))
-        return web.json_response({
-            'message': 'rate limiter rule updated',
-            'status_code': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		ctx = json.loads(await request.text())
+		_id = request.rel_url.query.get('id')
+		Validate.schema(ctx, rate_limit_rule_validator)
+		Validate.object_id(_id)
+		await RateLimiter.update_rule(_id, ctx, DB.get_redis(request))
+		return web.json_response({
+				'message': 'rate limiter rule updated',
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
         
-@router.delete('/rateLimiter/rule')
+@router.delete('/rate_limiter/rule')
 async def delete_rule(request: web.Request):
-    try:
-        # id to delete is from query params
-        id = request.rel_url.query.get('id')
-        if id is None:
-            raise Exception({
-                'message': 'Id not provided',
-                'status_code': 400
-            })
-        await RateLimiter.delete_rule(id, DB.get_redis(request))
-        return web.json_response({
-            'message': 'rate limiter rule deleted',
-            'statusCode': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		# id to delete is from query params
+		_id = request.rel_url.query.get('id')
+		Validate.object_id(_id)
+		await RateLimiter.delete_rule(_id, DB.get_redis(request))
+		return web.json_response({
+				'message': 'rate limiter rule deleted',
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
     
-@router.get('/rateLimiter/entry')
+@router.get('/rate_limiter/entry')
 async def retrieve_entry(request: web.Request):
-    try:
-        response = await RateLimiter.get_all_entries(DB.get_redis(request))
-        results = await Redis.format_response(response)
-        return web.json_response({
-            'status_code': 200,
-            'data': results
-        }, status=200)
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		response = []
+		if 'rule_id' in request.rel_url.query:
+			rule_id = request.rel_url.query.get('rule_id')
+			Validate.object_id(rule_id)
+			response = await RateLimiter.get_entry_by_rule_id(rule_id, DB.get_redis(request))
+		elif 'host' in request.rel_url.query:
+			host = request.rel_url.query.get('host')
+			response = await RateLimiter.get_entry_by_host(host, DB.get_redis(request))
+		elif 'id' in request.rel_url.query:
+			_id  = request.rel_url.query.get('id')
+			Validate.object_id(_id)
+			response = await RateLimiter.get_entry_by_id(_id, DB.get_redis(request))
+		else:
+			response = await RateLimiter.get_all_entries(DB.get_redis(request))
+		return web.json_response({
+				'data': response,
+				'status_code': 200
+		}, status=200)
+	except Exception as err:
+		return Error.handle(err)
         
-@router.post('/rateLimiter/entry')
+@router.post('/rate_limiter/entry')
 async def create_entry(request: web.Request):
-    try:
-        body = json.loads(await request.text())
-        data = await RateLimiter.create_entry(body, DB.get_redis(request))
-        return web.json_response({
-            'message': data,
-            'status_code': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		ctx = json.loads(await request.text())
+		Validate.schema(ctx, rate_limit_entry_validator)
+		await RateLimiter.create_entry(ctx, DB.get_redis(request))
+		return web.json_response({
+				'message': "Created rate limiter entry",
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
         
-@router.put('/rateLimiter/entry')
+@router.patch('/rate_limiter/entry')
 async def update_entry(request: web.Request):
-    try:
-        # id is passed thru query params according to spec, data should be passed through request body
-        body = json.loads(await request.text())
-        id = request.rel_url.query['id']
-        await RateLimiter.update_entry(id, body, DB.get_redis(request))
-        return web.json_response({
-            'message': 'rate limiter entry updated',
-            'status_code': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
-        
-@router.delete('/rateLimiter/entry')
+	try:
+		ctx = json.loads(await request.text())
+		_id = request.rel_url.query.get('id')
+		Validate.schema(ctx, rate_limit_entry_validator)
+		Validate.object_id(_id)
+		await RateLimiter.update_entry(_id, ctx, DB.get_redis(request))
+		return web.json_response({
+				'message': 'rate limiter entry updated',
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
+		
+@router.delete('/rate_limiter/entry')
 async def delete_entry(request: web.Request):
-    try:
-        # id to delete is from query params
-        id = request.rel_url.query.get('id')
-        if id is None:
-            raise Exception({
-                'message': 'Id not provided',
-                'status_code': 400
-            })
-        await RateLimiter.delete_rule(id, DB.get_redis(request))
-        return web.json_response({
-            'message': 'rate limiter entry deleted',
-            'statusCode': 200
-        })
-    except Exception as err:
-        return Error.handle(err)
+	try:
+		# id to delete is from query params
+		_id = request.rel_url.query.get('id')
+		Validate.object_id(_id)
+		await RateLimiter.delete_entry(_id, DB.get_redis(request))
+		return web.json_response({
+				'message': 'rate limiter entry deleted',
+				'status_code': 200
+		})
+	except Exception as err:
+		return Error.handle(err)
