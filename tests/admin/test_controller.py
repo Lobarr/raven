@@ -7,7 +7,7 @@ from mock import patch, MagicMock
 
 from api.admin import Admin, admin_validator
 from api.util import DB, Error, Validate, Bson
-from api.admin.controller import post_handler, get_handler, table, put_handler, delete_handler
+from api.admin.controller import post_handler, get_handler, table, patch_handler, delete_handler
 
 class TestAdminController:
   @pytest.mark.asyncio
@@ -32,7 +32,7 @@ class TestAdminController:
               handle_mock.assert_called_with(mock_err)
 
   @pytest.mark.asyncio
-  async def test_put_handler(self, *args):
+  async def test_patch_handler(self, *args):
     with patch.object(Validate, 'object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch('json.loads') as loads_mock:
@@ -45,7 +45,7 @@ class TestAdminController:
                   'id': 'some-value'
                 }
                 mock_req.rel_url.query = mock_query
-                await put_handler(mock_req)
+                await patch_handler(mock_req)
                 mock_req.text.assert_called()
                 loads_mock.assert_called()
                 update_mock.assert_called()
@@ -56,7 +56,7 @@ class TestAdminController:
                 
                 mock_err = Exception()
                 update_mock.side_effect = mock_err
-                await put_handler(mock_req)
+                await patch_handler(mock_req)
                 handle_mock.assert_called_with(mock_err)
 
   @pytest.mark.asyncio

@@ -51,7 +51,7 @@ async def create_handler(request: web.Request):
   except Exception as err:
     return Error.handle(err)
       
-@router.put('/request_validator')
+@router.patch('/request_validator')
 async def update_handler(request: web.Request):
   try:
     id = request.rel_url.query['id']
