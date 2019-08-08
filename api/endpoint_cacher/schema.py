@@ -1,7 +1,7 @@
 from cerberus import Validator
 from api.util import Bson
 
-endpoint_cacher_schema = {\
+endpoint_cache_schema = {\
   '_id': {
     'type': 'string'
   },
@@ -21,4 +21,4 @@ endpoint_cacher_schema = {\
   }
 }
 
-enpoint_cacher_validator = Validator(endpoint_cacher_schema)
+endpoint_cache_validator = Validator(endpoint_cache_schema)

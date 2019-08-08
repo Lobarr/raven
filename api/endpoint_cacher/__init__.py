@@ -1,1 +1,3 @@
-from .schema import enpoint_cacher_validator, endpoint_cacher_schema
+from .schema import endpoint_cache_validator, endpoint_cache_schema
+from .model import EndpointCacher
+from .controller import router as endpoint_cacher_router
