@@ -16,7 +16,7 @@ async def get_handler(request: web.Request):
       _id = request.rel_url.query.get('id')
       Validate.object_id(_id)
       cache = await EndpointCacher.get_by_id(_id, DB.get_redis(request))
-      if cache != None:
+      if not pydash.is_empty(cache):
         response.append(cache)
     elif 'service_id' in request.rel_url.query:
       service_id = request.rel_url.query.get('service_id')
@@ -56,19 +56,19 @@ async def patch_handler_response_codes(request: web.Request):
     _id = request.rel_url.query.get('id')
     action = request.rel_url.query.get('action')
     Validate.object_id(_id)
-    if action != None and action in ['add', 'remove']:
-      if action is 'add':
-        await EndpointCacher.add_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
-      elif action is 'remove':
-        await EndpointCacher.remove_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
+    if action == 'add':
+      await EndpointCacher.add_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
+    elif action == 'remove':
+      await EndpointCacher.remove_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
+    else:
       return web.json_response({
-        'message': 'Endpoint cache response codes updated',
-        'status_code': 200
-      })
+        'message': 'Invalid action provided',
+        'status_code': 400,
+      }, status=400)
     return web.json_response({
-      'message': 'Invalid action provided',
-      'status_code': 400
-    }, status=400)
+      'message': 'Endpoint cache response codes updated',
+      'status_code': 200,
+    })
   except Exception as err:
     return Error.handle(err)
 
