@@ -1,6 +1,5 @@
 import json
 from aiohttp import web
-from bson import json_util
 from .model import RateLimiter
 from .schema import rate_limit_entry_validator, rate_limit_rule_validator
 from api.util import Error, Bson, DB, Redis, Validate

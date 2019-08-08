@@ -1,8 +1,4 @@
-import asyncio
-import aioredis
 import bson
-import json
-import base64
 import pydash
 from aioredis import Redis as AioRedis
 from cerberus import Validator
@@ -148,6 +144,7 @@ class RateLimiter:
     await RateLimiter.__set_indexes(ctx, db)
     await db.hmset_dict(ctx['_id'], ctx)
     await db.sadd(entry_set, ctx['_id'])
+    await db.expire(ctx['_id'], int(ctx['timeout']))
           
   @staticmethod
   async def update_entry(_id, ctx, db):
