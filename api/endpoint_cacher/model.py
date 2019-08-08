@@ -38,7 +38,7 @@ class EndpointCacher:
   async def create(ctx: object, endpoint_cacher_db: AioRedis, service_db):
     ctx['_id'] = str(bson.ObjectId())
     if 'service_id' in ctx:
-      Service.check_exists(ctx['service_id'], service_db)
+      await Service.check_exists(ctx['service_id'], service_db)
     if 'response_codes' in ctx:
       response_codes = ctx['response_codes']
       response_codes_id = str(bson.ObjectId())
@@ -63,7 +63,9 @@ class EndpointCacher:
   @staticmethod
   async def get_by_id(_id: str, db: AioRedis):
     endpoint_cache = await db.hgetall(_id, encoding='utf-8')
-    endpoint_cache['response_codes'] = await db.smembers(endpoint_cache['response_codes'], encoding='utf-8')
+    if not pydash.is_empty(endpoint_cache):
+      response_codes_id = endpoint_cache['response_codes']
+      endpoint_cache['response_codes'] = await db.smembers(response_codes_id, encoding='utf-8')
     return endpoint_cache
   
   @staticmethod
@@ -98,8 +100,8 @@ class EndpointCacher:
 
   @staticmethod
   async def add_status_codes(status_codes: list, _id: str, db: AioRedis):
-    endpoint_cache = await EndpointCacher.get_by_id(_id)
-    if not endpoint_cache or not endpoint_cache['response_codes']:
+    endpoint_cache = await db.hgetall(_id, encoding='utf-8')
+    if endpoint_cache == None or not pydash.is_string(endpoint_cache['response_codes']):
       raise Exception({
         'message': f'Unable to update cache {_id}',
         'status_code': 400
@@ -109,8 +111,8 @@ class EndpointCacher:
     
   @staticmethod
   async def remove_status_codes(status_codes: list, _id: str, db: AioRedis):
-    endpoint_cache = await EndpointCacher.get_by_id(_id)
-    if not endpoint_cache or not endpoint_cache['response_codes']:
+    endpoint_cache = await db.hgetall(_id, encoding='utf-8')
+    if not endpoint_cache or not pydash.is_string(endpoint_cache['response_codes']):
       raise Exception({
         'message': f'Unable to update cache {_id}',
         'status_code': 400
