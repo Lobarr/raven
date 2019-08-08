@@ -19,6 +19,7 @@ from api.admin import admin_router, Admin
 from api.rate_limiter import rate_limiter_router
 from api.event import event_router
 from api.circuit_breaker import circuit_breaker_router
+from api.endpoint_cacher import endpoint_cacher_router
 
 #utils
 from api.util.env import DB, REDIS
@@ -39,6 +40,7 @@ async def init():
   raven.add_routes(rate_limiter_router)
   raven.add_routes(event_router)
   raven.add_routes(circuit_breaker_router)
+  raven.add_routes(endpoint_cacher_router)
   raven.add_routes([web.static('/dashboard', './client/dist')]) if is_prod else None
   app.add_subapp('/raven', raven)
 
