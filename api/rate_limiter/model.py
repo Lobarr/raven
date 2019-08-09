@@ -3,7 +3,7 @@ import pydash
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
-from api.util import Bson, Redis
+from api.util import Bson, DB
 
 rules_set = 'rules_set'
 rule_path_index = 'rule_path_index'
@@ -126,7 +126,7 @@ class RateLimiter:
   @staticmethod
   async def get_all_rules(db: AioRedis):
     rules = []
-    rules_keys = await Redis.fetch_members(rules_set, db)
+    rules_keys = await DB.fetch_members(rules_set, db)
     for rule_key in rules_keys:
       ctx = await db.hgetall(rule_key, encoding='utf-8')
       rules.append(ctx)
@@ -178,7 +178,7 @@ class RateLimiter:
     @return: the records with the provided statusCode
     """
     entries = []
-    entries_keys = await Redis.fetch_members(entry_set, db)
+    entries_keys = await DB.fetch_members(entry_set, db)
     for entry_key in entries_keys:
       ctx = await db.hgetall(entry_key, encoding='utf-8')
       entries.append(ctx)

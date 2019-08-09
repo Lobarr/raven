@@ -38,28 +38,7 @@ class TestInsights:
       await Insights.update(mock_id, mock_ctx, mock_db)
       mock_db.update_one.assert_called()
       bson_object_id_mock.assert_called_with(mock_id)
-      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))
-  
-  @pytest.mark.asyncio
-  async def test_remove(self, *args):
-    with patch('bson.ObjectId') as object_id_mock:
-      mock_id = 'some-value'
-      mock_db = MagicMock()
-      mock_db.delete_one = CoroutineMock()
-      await Insights.remove(mock_id, mock_db)
-      mock_db.delete_one.assert_called()
-      object_id_mock.assert_called_with(mock_id)
-
-  @pytest.mark.asyncio
-  async def test_get_all(self, *args):
-    mock_db = CoroutineMock()
-    mock_cursor = MagicMock()
-    mock_cursor.to_list = CoroutineMock()
-    mock_db.find = MagicMock()
-    mock_db.find.return_value = mock_cursor
-    await Insights.get_all(mock_db)
-    mock_db.find.assert_called_with({})
-    mock_cursor.to_list.assert_called()
+      expect(mock_db.update_one.await_args[0][0]['_id']).to(equal(mock_id))  
   
   @pytest.mark.asyncio
   async def test_get_by_service_id(self, *args):
@@ -151,4 +130,23 @@ class TestInsights:
     mock_db.find.assert_called_with({'method': mock_method})
     mock_cursor.to_list.assert_called()
   
+  @pytest.mark.asyncio
+  async def test_get_all(self, *args):
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
+    await Insights.get_all(mock_db)
+    mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
 
+  @pytest.mark.asyncio
+  async def test_remove(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_db = MagicMock()
+      mock_db.delete_one = CoroutineMock()
+      await Insights.remove(mock_id, mock_db)
+      mock_db.delete_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)

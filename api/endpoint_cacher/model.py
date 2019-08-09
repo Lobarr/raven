@@ -4,7 +4,7 @@ import logging
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
-from api.util import Bson, Redis
+from api.util import Bson
 from api.service import Service
 
 endpoint_cache_set = 'endpoint_cache_set'

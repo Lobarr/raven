@@ -10,8 +10,13 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from api.util import Bytes
 
 class Crypt:
+  """
+  generates key pair  
+
+  @returns: public and private key pair
+  """
   @staticmethod
-  def generate_key_pair():
+  def generate_key_pair() -> object:
     private_key = ec.generate_private_key(
      ec.SECP256K1(), default_backend()
     )
@@ -31,8 +36,14 @@ class Crypt:
       'public_key': serialized_public_key
     }
   
+  """
+  signs a message
+
+  @param message: (object) message to sign
+  @param private_key: (str) private key to sign with
+  """
   @staticmethod
-  def sign(message: object, private_key: str):
+  def sign(message: object, private_key: str) -> str:
     private_key_bytes = serialization.load_pem_private_key(
       private_key.encode('utf-8'),
       password=None,
@@ -40,6 +51,13 @@ class Crypt:
     )
     return Bytes.encode_bytes(private_key_bytes.sign(Bytes.object_to_bytes(message), ec.ECDSA(hashes.SHA256()))).decode('utf-8')
   
+  """
+  verfies message with digital signature
+
+  @param message: (object) message to verify
+  @param signature: (str) signature to verify message with 
+  @param public_key: (str) public key to verify message with
+  """
   @staticmethod
   def verify(message: object, signature: str, public_key: str) -> bool:
     try:
@@ -52,8 +70,15 @@ class Crypt:
     except InvalidSignature:
       return False
   
+  """
+  encrypts message
+
+  @param message: (object) message to encrypt
+  @param private_key: (str) private key to encrypt message with
+  @param receiver_public_key: (str) public key of person able to decrypt message
+  """
   @staticmethod
-  def encrypt(message: object, private_key: str, receiver_public_key):
+  def encrypt(message: object, private_key: str, receiver_public_key: str) -> str:
     iv = '000000000000'.encode('utf-8')
     private_key_bytes = serialization.load_pem_private_key(
       private_key.encode('utf-8'),
@@ -81,6 +106,13 @@ class Crypt:
     ciphertext = encryptor.update(Crypt._pad_data(json.dumps(message))) + encryptor.finalize()
     return Bytes.encode_bytes(point + encryptor.tag + ciphertext).decode('utf-8')
 
+  """
+  decrypts message
+
+  @param message: (str) message to decrypt
+  @param receiver_private_key: (str) private key to decrypt with
+  """
+  @staticmethod
   def decrypt(message: str, receiver_private_key: str) -> str:
     message = Bytes.decode_bytes(message.encode('utf-8'))
     point = message[0:65]

@@ -27,8 +27,6 @@ class TestRequestValidator:
       await RequestValidator.create(mock_ctx, mock_db, mock_db)
       check_exists_mock.assert_called()
 
-
-
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
@@ -63,6 +61,19 @@ class TestRequestValidator:
     await RequestValidator.get_all(mock_db)
     mock_db.find.assert_called_with({})
     mock_cursor.to_list.assert_called()
+
+  @pytest.mark.asyncio
+  async def test_get_by_id(self, *args):
+    with patch('bson.ObjectId') as bson_object_id_mock:
+      mock_id = 'some-value'
+      bson_object_id_mock.return_value = mock_id  
+      mock_db = MagicMock()
+      mock_db.find_one = CoroutineMock()
+
+      await RequestValidator.get_by_id(mock_id, mock_db)
+      mock_db.find_one.assert_called()
+      bson_object_id_mock.assert_called_with(mock_id)
+      expect(mock_db.find_one.await_args[0][0]['_id']).to(equal(mock_id))
   
   @pytest.mark.asyncio
   async def test_get_by_service_id(self, *args):
@@ -156,15 +167,3 @@ class TestRequestValidator:
       mock_strength_percentage = 0.90
       await RequestValidator.enforce_strength(mock_password, mock_strength_percentage)
 
-  @pytest.mark.asyncio
-  async def test_get_by_id(self, *args):
-    with patch('bson.ObjectId') as bson_object_id_mock:
-      mock_id = 'some-value'
-      bson_object_id_mock.return_value = mock_id  
-      mock_db = MagicMock()
-      mock_db.find_one = CoroutineMock()
-
-      await RequestValidator.get_by_id(mock_id, mock_db)
-      mock_db.find_one.assert_called()
-      bson_object_id_mock.assert_called_with(mock_id)
-      expect(mock_db.find_one.await_args[0][0]['_id']).to(equal(mock_id))

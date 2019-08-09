@@ -7,7 +7,7 @@ from asynctest import CoroutineMock
 from expects import expect, equal, raise_error, be_an, have_keys
 from api.event import Event, event_validator
 from api.circuit_breaker import CircuitBreaker
-from api.util import Validate, Crypt
+from api.util import Validate, Crypt, Api
 
 class TestEvent:
   @pytest.mark.asyncio
@@ -52,27 +52,6 @@ class TestEvent:
       mock_db.find_one.assert_awaited_with({'_id': mock_id})
   
   @pytest.mark.asyncio
-  async def test_remove(self, *args):
-    with patch('bson.ObjectId') as object_id_mock:
-      mock_id = 'some-value'
-      mock_db = MagicMock()
-      mock_db.delete_one = CoroutineMock()
-      await Event.remove(mock_id, mock_db)
-      mock_db.delete_one.assert_called()
-      object_id_mock.assert_called_with(mock_id)
-
-  @pytest.mark.asyncio
-  async def test_get_all(self, *args):
-    mock_db = CoroutineMock()
-    mock_cursor = MagicMock()
-    mock_cursor.to_list = CoroutineMock()
-    mock_db.find = MagicMock()
-    mock_db.find.return_value = mock_cursor
-    await Event.get_all(mock_db)
-    mock_db.find.assert_called_with({})
-    mock_cursor.to_list.assert_called()
-  
-  @pytest.mark.asyncio
   async def test_get_by_circuit_breaker_id(self, *args):
     mock_circuit_breaker_mock = 'some-value'
     mock_db = CoroutineMock()
@@ -99,12 +78,33 @@ class TestEvent:
     mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
+  async def test_get_all(self, *args):
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
+    await Event.get_all(mock_db)
+    mock_db.find.assert_called_with({})
+    mock_cursor.to_list.assert_called()
+  
+  @pytest.mark.asyncio
+  async def test_remove(self, *args):
+    with patch('bson.ObjectId') as object_id_mock:
+      mock_id = 'some-value'
+      mock_db = MagicMock()
+      mock_db.delete_one = CoroutineMock()
+      await Event.remove(mock_id, mock_db)
+      mock_db.delete_one.assert_called()
+      object_id_mock.assert_called_with(mock_id)
+
+  @pytest.mark.asyncio
   async def test_handle_event(self, *args):
-    with patch('requests.post') as post_req_mock:
+    with asynctest.patch.object(Api, 'call') as post_req_mock:
       mock_ctx = {
         'target': 'some-value',
         'body': {},
         'headers': {}
       }
       await Event.handle_event(mock_ctx)
-      post_req_mock.assert_called_with(url=mock_ctx['target'], data=mock_ctx['body'], headers=mock_ctx['headers'])
+      post_req_mock.assert_called_with(method='post', url=mock_ctx['target'], data=mock_ctx['body'], headers=mock_ctx['headers'])

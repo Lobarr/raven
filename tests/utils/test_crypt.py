@@ -27,7 +27,6 @@ class TestCrypt:
   @patch.object(Bytes, 'decode_bytes')
   @patch.object(Bytes, 'object_to_bytes')
   def test_verify(self, *args):
-
     with patch('cryptography.hazmat.primitives.serialization.load_pem_public_key') as load_public_key_mock:
       mock_message = {}
       mock_signature = 'some-value'
@@ -45,7 +44,4 @@ class TestCrypt:
       mock_public_key = 'some-value'
       verified = Crypt.verify(mock_message, mock_signature, mock_public_key)
       expect(verified).to(be_false)
-  
-
-
  

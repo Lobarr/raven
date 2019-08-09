@@ -3,7 +3,7 @@ import pydash
 from aiohttp import web
 from .model import EndpointCacher
 from .schema import endpoint_cache_schema, endpoint_cache_validator
-from api.util import Error, Bson, DB, Redis, Validate
+from api.util import Error, Bson, DB, Validate
 from api.service import controller
 
 router = web.RouteTableDef()
