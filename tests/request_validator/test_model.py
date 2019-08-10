@@ -166,4 +166,3 @@ class TestRequestValidator:
       mock_password = 'some-value'
       mock_strength_percentage = 0.90
       await RequestValidator.enforce_strength(mock_password, mock_strength_percentage)
-

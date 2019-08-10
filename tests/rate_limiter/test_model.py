@@ -16,7 +16,6 @@ class TestRateLimiter:
       'host': 'some-host',
       'status_code': 'some-value',
       'rule_id': 'some-value', 
-      'host': 'some-value'
     }
     mock_db = MagicMock()
     mock_hset = CoroutineMock()

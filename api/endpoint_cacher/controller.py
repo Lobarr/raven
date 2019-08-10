@@ -98,4 +98,3 @@ async def post_handler(request: web.Request):
     })
   except Exception as err:
     return Error.handle(err)
-

@@ -33,7 +33,7 @@ class RequestValidator:
 		await db.update_one({'_id': bson.ObjectId(request_validator_id)}, {'$set': ctx})
         
 	@staticmethod
-	async def delete(id: str, db: AsyncIOMotorCollection):
+	async def delete(_id: str, db: AsyncIOMotorCollection):
 		"""
 		Deletes a request validation entry.
 
@@ -41,7 +41,7 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: true for success, false for failure (expand on this after discussion)
 		"""
-		await db.delete_one({'_id': bson.ObjectId(id)})
+		await db.delete_one({'_id': bson.ObjectId(_id)})
 			
 	@staticmethod
 	async def get_all(db: AsyncIOMotorCollection):
@@ -55,8 +55,8 @@ class RequestValidator:
 		return await res.to_list(100)
 	
 	@staticmethod
-	async def get_by_id(id: str, db: AsyncIOMotorCollection):
-		return await db.find_one({'_id': bson.ObjectId(id)})
+	async def get_by_id(_id: str, db: AsyncIOMotorCollection):
+		return await db.find_one({'_id': bson.ObjectId(_id)})
 
 	@staticmethod
 	async def get_by_service_id(service_id: str, db: AsyncIOMotorCollection):

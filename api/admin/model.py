@@ -21,7 +21,7 @@ class Admin:
     await db.insert_one(ctx)
 
   @staticmethod
-  async def update(id: str, ctx: dict, db):
+  async def update(_id: str, ctx: dict, db):
     """
     updates an admin
   
@@ -30,10 +30,10 @@ class Admin:
     """
     if 'password' in ctx:
       ctx['password'] = Password.hash(ctx['password'])
-    await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
+    await db.update_one({'_id': bson.ObjectId(_id)}, {'$set': ctx})
 
   @staticmethod
-  async def get_by_id(id: str, db):
+  async def get_by_id(_id: str, db):
     """
     gets an admin by id
   
@@ -41,7 +41,7 @@ class Admin:
     @param id: id of admin
     @param db: mongo instance
     """
-    return await db.find_one({'_id': bson.ObjectId(id)})
+    return await db.find_one({'_id': bson.ObjectId(_id)})
 
   @staticmethod
   async def get_by_email(email: str, db):
@@ -100,14 +100,14 @@ class Admin:
     return await db.count_documents({})
   
   @staticmethod
-  async def remove(id: str, db):
+  async def remove(_id: str, db):
     """
     removes an id
   
     @param id: (str) id of admin
     @param db: mongo instance
     """
-    await db.delete_one({'_id': bson.ObjectId(id)})
+    await db.delete_one({'_id': bson.ObjectId(_id)})
   
   @staticmethod
   async def create_default(db):

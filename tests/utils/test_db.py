@@ -63,4 +63,3 @@ class TestDB:
     mock_key = 'some-value'
     await DB.fetch_members(mock_key, mock_db)
     mock_db.smembers.assert_called_with(mock_key, encoding='utf-8')
-
