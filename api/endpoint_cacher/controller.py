@@ -56,6 +56,7 @@ async def patch_handler_response_codes(request: web.Request):
     _id = request.rel_url.query.get('id')
     action = request.rel_url.query.get('action')
     Validate.object_id(_id)
+    Validate.schema(ctx, endpoint_cache_validator)
     if action == 'add':
       await EndpointCacher.add_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
     elif action == 'remove':

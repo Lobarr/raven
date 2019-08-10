@@ -76,6 +76,7 @@ class EndpointCacher:
       EndpointCacher._set_indexes(ctx, endpoint_cacher_db),
       endpoint_cacher_db.hmset_dict(ctx['_id'], ctx),
       endpoint_cacher_db.sadd(endpoint_cache_set, ctx['_id']),
+      endpoint_cacher_db.expire(ctx['_id'], int(ctx['timeout']))
     )
   
   """

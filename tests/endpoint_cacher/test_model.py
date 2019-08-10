@@ -58,18 +58,22 @@ class TestEndpointCacher:
       with asynctest.patch.object(EndpointCacher, '_set_indexes') as _set_indexes_mock:
         mock_ctx = {
           'service_id': 'some-id',
-          'response_codes': [200]
+          'response_codes': [200],
+          'timeout': 2
         }
         mock_endpoint_cacher_db = MagicMock()
         mock_service_db = MagicMock()
         mock_sadd = CoroutineMock()
         mock_hmset_dict = CoroutineMock()
+        mock_expire = CoroutineMock()
         mock_endpoint_cacher_db.sadd = mock_sadd
         mock_endpoint_cacher_db.hmset_dict = mock_hmset_dict
+        mock_endpoint_cacher_db.expire = mock_expire
         await EndpointCacher.create(mock_ctx, mock_endpoint_cacher_db, mock_service_db)
         check_exists_mock.assert_awaited()
         _set_indexes_mock.assert_called()
-        expect(mock_hmset_dict.await_args[0][1]).to(have_keys('service_id', 'response_codes'))
+        mock_expire.assert_awaited()
+        expect(mock_hmset_dict.await_args[0][1]).to(have_keys('service_id', 'response_codes', '_id'))
         expect(mock_hmset_dict.await_args[0][1]['service_id']).to(equal(mock_ctx['service_id']))
         expect(mock_sadd.await_count).to(equal(2))
 

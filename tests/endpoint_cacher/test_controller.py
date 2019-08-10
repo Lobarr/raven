@@ -1,13 +1,14 @@
 import pytest
+import pydash
 import mock
+import asynctest
 from aiohttp import web
 from asynctest import CoroutineMock
-from expects import expect, equal, have_keys
+from expects import expect, equal, have_keys, raise_error
 from mock import patch, MagicMock
-
 from api.endpoint_cacher import EndpointCacher, endpoint_cache_validator
 from api.util import DB, Error, Validate, Bson
-from api.endpoint_cacher.controller import post_handler, get_handler, patch_handler, delete_handler
+from api.endpoint_cacher.controller import post_handler, get_handler, patch_handler, delete_handler, patch_handler_response_codes
 
 class TestEndpointCacherController:
   @pytest.mark.asyncio
@@ -63,6 +64,44 @@ class TestEndpointCacherController:
                 await patch_handler(mock_req)
                 handle_mock.assert_called_with(mock_err)
 
+  @pytest.mark.asyncio
+  async def test_patch_handler_response_codes(self, *args):
+    with patch.object(Validate, 'object_id') as object_id_mock:
+      with patch.object(DB, 'get_redis') as get_redis_mock:
+        with patch('json.loads') as loads_mock:
+          with asynctest.patch.object(EndpointCacher, 'add_status_codes') as add_status_codes_mock:
+            with asynctest.patch.object(EndpointCacher, 'remove_status_codes') as remove_status_codes_mock:
+              with patch.object(Error, 'handle') as handle_mock:
+                with patch.object(Validate, 'schema') as validate_mock:
+                  get_redis_mock.return_value = {}
+                  mock_query = {
+                    'id': 'some-value',
+                    'action': 'add'
+                  }
+                  mock_ctx = {
+                    'response_codes': [200]
+                  }
+                  mock_req = MagicMock()
+                  mock_req.text = CoroutineMock()
+                  mock_req.rel_url.query = mock_query
+                  loads_mock.return_value = mock_ctx
+                  await patch_handler_response_codes(mock_req)
+                  object_id_mock.assert_called_with(mock_query['id'])
+                  validate_mock.assert_called_with(mock_ctx, endpoint_cache_validator)
+                  add_status_codes_mock.assert_called_with(mock_ctx['response_codes'], mock_query['id'], {})
+
+                  mock_query = pydash.merge(mock_query, {'action': 'remove'})
+                  mock_req.rel_url.query = mock_query
+                  await patch_handler_response_codes(mock_req)
+                  remove_status_codes_mock.assert_called_with(mock_ctx['response_codes'], mock_query['id'], {})
+
+                  try:
+                    mock_err = Exception
+                    remove_status_codes_mock.side_effect = mock_err
+                    await patch_handler_response_codes(mock_req)
+                  except Exception as err:
+                    handle_mock.assert_called_with(err)
+                  
   @pytest.mark.asyncio
   async def test_delete_handler(self, *args):
     with patch.object(Validate, 'object_id') as object_id_mock:
