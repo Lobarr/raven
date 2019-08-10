@@ -13,17 +13,36 @@ endpoint_cache_service_id_index = 'endpoint_cache_service_id'
 endpoint_cache_endpoint_index = 'endpoint_cache_endpoint_index'
 
 class EndpointCacher:
+  """
+  sets secondary indexes
+
+  @param ctx: indexess to set 
+  @param db: redis instance
+  """
   @staticmethod
   async def _set_indexes(ctx: object, db: AioRedis):
     for index in [('service_id', endpoint_cache_service_id_index), ('endpoint', endpoint_cache_endpoint_index)]:
       if index[0] in ctx:
         await db.hset(index[1], ctx['_id'], ctx[index[0]])
 
+  """
+  clears secondary indexes
+
+  @param id: id of entity
+  @param db: redis instance
+  """
   @staticmethod
   async def _clear_indexes(_id: str, db: AioRedis):
     for index in [endpoint_cache_endpoint_index, endpoint_cache_service_id_index]:
       await db.hdel(index, _id)
 
+  """
+  searches secondary indexes
+
+  @param index: (str) index to search
+  @param serach: (str) serach value
+  @param db: redis instance
+  """
   @staticmethod
   async def _search_indexes(index: str, search: str, db: AioRedis) -> list:
     keys = []
@@ -35,6 +54,13 @@ class EndpointCacher:
           keys.append(key[0].decode('utf-8'))
     return keys
 
+  """
+  creates an endpoint cache
+
+  @param ctx: (object) data to be inserted
+  @param endpoint_cacher_db: (object) db connection
+  @param service_db: (object) db connection
+  """
   @staticmethod
   async def create(ctx: object, endpoint_cacher_db: AioRedis, service_db):
     ctx['_id'] = str(bson.ObjectId())
@@ -52,11 +78,24 @@ class EndpointCacher:
       endpoint_cacher_db.sadd(endpoint_cache_set, ctx['_id']),
     )
   
+  """
+  updates an endpoint cache.
+
+  @param id: (str) id of endpoint cache to update
+  @param ctx: (object) data to use for update
+  @param db: (object) db connection
+  """
   @staticmethod
   async def update(_id: str, ctx: object, db: AioRedis):
     await EndpointCacher._set_indexes(pydash.merge(ctx, {'_id': _id}), db)
     await db.hmset_dict(_id, ctx)
 
+  """
+  deletes a endpoint cache rule.
+
+  @param id: (string) id of endpoint cache to delete
+  @param db: (object) db connection
+  """
   @staticmethod
   async def delete(_id: str, db: AioRedis):
     await asyncio.gather(
@@ -65,6 +104,12 @@ class EndpointCacher:
       db.srem(endpoint_cache_set, _id),
     )
 
+  """
+  gets endpoint cache by id
+
+  @param id: (str) id of endpoint cache
+  @param db: db connection
+  """
   @staticmethod
   async def get_by_id(_id: str, db: AioRedis) -> object:
     endpoint_cache = await db.hgetall(_id, encoding='utf-8')
@@ -73,6 +118,12 @@ class EndpointCacher:
       response_codes = await db.smembers(response_codes_id, encoding='utf-8')
     return pydash.merge(endpoint_cache, {'response_codes': response_codes})
   
+  """
+  gets endpoint cache by service id
+
+  @param service_id: (str) service id of endpoint cache
+  @param db: db connection
+  """
   @staticmethod
   async def get_by_service_id(service_id: str, db: AioRedis) -> list:
     endpoint_caches = []
@@ -84,6 +135,12 @@ class EndpointCacher:
       endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
     return endpoint_caches
 
+  """
+  gets endpoint cache by endpoint
+
+  @param endpoint: (str) endpoint to get
+  @param db: db connection
+  """
   @staticmethod
   async def get_by_endpoint(endpoint: str, db: AioRedis) -> list:
     endpoint_caches = []
@@ -95,6 +152,11 @@ class EndpointCacher:
       endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
     return endpoint_caches
   
+  """
+  gets all endpoint caches
+
+  @param db: db connection
+  """
   @staticmethod
   async def get_all(db: AioRedis) -> list:
     endpoint_caches = []
@@ -106,6 +168,13 @@ class EndpointCacher:
       endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
     return endpoint_caches
 
+  """
+  adds status codes to endpoint cache
+
+  @param status_codes: (list) status codes to add
+  @param id: (str) id of endpoint cache
+  @param db: db connection
+  """
   @staticmethod
   async def add_status_codes(status_codes: list, _id: str, db: AioRedis):
     endpoint_cache = await db.hgetall(_id, encoding='utf-8')
@@ -117,6 +186,13 @@ class EndpointCacher:
     for status_code in status_codes:
       await db.sadd(endpoint_cache['response_codes'], status_code)
     
+  """
+  removes status codes to endpoint cache
+
+  @param status_codes: (list) status codes to remove
+  @param id: (str) id of endpoint cache
+  @param db: db connection
+  """
   @staticmethod
   async def remove_status_codes(status_codes: list, _id: str, db: AioRedis):
     endpoint_cache = await db.hgetall(_id, encoding='utf-8')

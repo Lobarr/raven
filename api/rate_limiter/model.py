@@ -43,7 +43,7 @@ class RateLimiter:
       db.hdel(index, _id)
   
   @staticmethod
-  async def __search_indexes(index: str, search: str, db: AioRedis):
+  async def __search_indexes(index: str, search: str, db: AioRedis) -> list:
     """
     searches secondary indexes
 
@@ -80,6 +80,7 @@ class RateLimiter:
     """
     Updates a rate limiter rule.
 
+    @param id: (str) id of rule to update
     @param ctx: (object) data to use for update
     @param db: (object) db connection
     """
@@ -103,11 +104,17 @@ class RateLimiter:
     )
 
   @staticmethod
-  async def get_rule_by_id(_id: str, db: AioRedis):
+  async def get_rule_by_id(_id: str, db: AioRedis) -> object:
+    """
+    gets rule by id
+
+    @param id: (str) id of rule
+    @param db: db connection
+    """
     return await db.hgetall(_id, encoding='utf-8')
 
   @staticmethod
-  async def get_rule_by_status_code(status_code: int, db: AioRedis):
+  async def get_rule_by_status_code(status_code: int, db: AioRedis) -> list:
     """
     Gets a rate limiter rule by the status code
 
@@ -124,7 +131,7 @@ class RateLimiter:
           
   
   @staticmethod
-  async def get_rule_by_path(path, db):
+  async def get_rule_by_path(path, db) -> list:
     """
     Gets a rate limiter rule by the path of the rule
 
@@ -141,7 +148,13 @@ class RateLimiter:
 
 
   @staticmethod
-  async def get_rule_by_host(host: str, db: AioRedis):
+  async def get_rule_by_host(host: str, db: AioRedis) -> list:
+    """
+    gets rules by host
+
+    @param host: (str) host to get
+    @param db: db connection
+    """
     rules = []
     keys = await RateLimiter.__search_indexes(rule_host_index, host, db)
     for key in keys:
@@ -150,7 +163,12 @@ class RateLimiter:
     return rules
   
   @staticmethod
-  async def get_all_rules(db: AioRedis):
+  async def get_all_rules(db: AioRedis) -> list:
+    """
+    gets all rules
+
+    @param db: db connection
+    """
     rules = []
     rules_keys = await DB.fetch_members(rules_set, db)
     for rule_key in rules_keys:
