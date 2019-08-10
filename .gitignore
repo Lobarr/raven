@@ -1,6 +1,7 @@
 workspace.py
 
 # Environments
+.coverage
 workspace.py
 .env
 venv/
