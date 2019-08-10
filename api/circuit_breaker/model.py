@@ -17,7 +17,7 @@ class CircuitBreaker:
     await circuit_breaker_db.insert_one(ctx)  
 
   @staticmethod
-  async def update(id: str, ctx: object, db: AsyncIOMotorCollection):
+  async def update(_id: str, ctx: object, db: AsyncIOMotorCollection):
     """
     updates circuit breaker
   
@@ -25,17 +25,17 @@ class CircuitBreaker:
     @param ctx: (object) context of update
     @param db: mongo instance
     """
-    await db.update_one({'_id': bson.ObjectId(id)}, {'$set': ctx})
+    await db.update_one({'_id': bson.ObjectId(_id)}, {'$set': ctx})
   
   @staticmethod
-  async def get_by_id(id: str, db: AsyncIOMotorCollection):
+  async def get_by_id(_id: str, db: AsyncIOMotorCollection):
     """
     gets cirbuit breaker by id
   
     @param id: (str) id of cirbuit breaker
     @param db: mongo instance
     """
-    return await db.find_one({'_id': bson.ObjectId(id)})
+    return await db.find_one({'_id': bson.ObjectId(_id)})
   
   @staticmethod
   async def get_by_service_id(service_id: str, db: AsyncIOMotorCollection):
@@ -104,14 +104,14 @@ class CircuitBreaker:
 
 
   @staticmethod
-  async def remove(id: str, db: AsyncIOMotorCollection):
+  async def remove(_id: str, db: AsyncIOMotorCollection):
     """
     removes a cirbuit breaker
   
     @param id: (str) id of circuit breaker
     @param db: mongo instance
     """
-    await db.delete_one({'_id': bson.ObjectId(id)})
+    await db.delete_one({'_id': bson.ObjectId(_id)})
 
   @staticmethod
   async def check_exists(circuit_breaker_id: str, db: AsyncIOMotorCollection):
