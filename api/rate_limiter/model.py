@@ -1,5 +1,6 @@
 import bson
 import pydash
+import asyncio
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
@@ -16,6 +17,12 @@ entry_host_index = 'entry_host_index'
 class RateLimiter:
   @staticmethod
   async def __set_indexes(ctx: object, db: AioRedis):
+    """
+    sets secondary indexes
+
+    @param ctx: indexess to set 
+    @param db: redis instance
+    """
     for index in [('path', rule_path_index), ('host', rule_host_index), ('status_code', rule_status_code_index)]:
       if index[0] in ctx:
         db.hset(index[1], ctx['_id'], ctx[index[0]])
@@ -26,11 +33,24 @@ class RateLimiter:
   
   @staticmethod
   async def __clear_indexes(_id: str, db: AioRedis):
+    """
+    clears secondary indexes
+  
+    @param id: id of entity
+    @param db: redis instance
+    """
     for index in [rule_path_index, rule_host_index, rule_status_code_index, entry_rule_id_index, entry_host_index]:
       db.hdel(index, _id)
   
   @staticmethod
   async def __search_indexes(index: str, search: str, db: AioRedis):
+    """
+    searches secondary indexes
+
+    @param index: (str) index to search
+    @param serach: (str) serach value
+    @param db: redis instance
+    """
     keys = []
     cur = b'0'
     while cur:
@@ -49,9 +69,11 @@ class RateLimiter:
     @param db: (object) db connection
     """
     ctx['_id'] = str(bson.ObjectId())
-    await RateLimiter.__set_indexes(ctx, db)
-    await db.hmset_dict(ctx['_id'], ctx)
-    await db.sadd(rules_set, ctx['_id'])
+    await asyncio.gather(
+      RateLimiter.__set_indexes(ctx, db),
+      db.hmset_dict(ctx['_id'], ctx),
+      db.sadd(rules_set, ctx['_id']),
+    )
 
   @staticmethod
   async def update_rule(_id: str, ctx: object, db: AioRedis):
@@ -61,8 +83,10 @@ class RateLimiter:
     @param ctx: (object) data to use for update
     @param db: (object) db connection
     """
-    await RateLimiter.__set_indexes(pydash.merge(ctx, {'_id': _id}), db)
-    await db.hmset_dict(_id, ctx)
+    await asyncio.gather(
+      RateLimiter.__set_indexes(pydash.merge(ctx, {'_id': _id}), db),
+      db.hmset_dict(_id, ctx)
+    )
 
   @staticmethod
   async def delete_rule(_id: str, db: AioRedis):
@@ -72,9 +96,11 @@ class RateLimiter:
     @param id: (string) the ID of the rate limiter rule to delete
     @param db: (object) db connection
     """
-    await db.delete(_id)
-    await RateLimiter.__clear_indexes(_id, db)
-    await db.srem(rules_set, _id)
+    await asyncio.gather(
+      db.delete(_id),
+      RateLimiter.__clear_indexes(_id, db),
+      db.srem(rules_set, _id)
+    )
 
   @staticmethod
   async def get_rule_by_id(_id: str, db: AioRedis):
@@ -141,10 +167,12 @@ class RateLimiter:
     @param db: (object) db connection
     """
     ctx['_id'] = str(bson.ObjectId())
-    await RateLimiter.__set_indexes(ctx, db)
-    await db.hmset_dict(ctx['_id'], ctx)
-    await db.sadd(entry_set, ctx['_id'])
-    await db.expire(ctx['_id'], int(ctx['timeout']))
+    await asyncio.gather(
+      RateLimiter.__set_indexes(ctx, db),
+      db.hmset_dict(ctx['_id'], ctx),
+      db.sadd(entry_set, ctx['_id']),
+      db.expire(ctx['_id'], int(ctx['timeout']))
+    )
           
   @staticmethod
   async def update_entry(_id, ctx, db):
@@ -154,8 +182,10 @@ class RateLimiter:
     @param ctx: (object) data to use for update
     @param db: (object) db connection
     """
-    await RateLimiter.__set_indexes(pydash.merge(ctx, {'_id': _id}), db)
-    await db.hmset_dict(_id, ctx)
+    await asyncio.gather(
+      RateLimiter.__set_indexes(pydash.merge(ctx, {'_id': _id}), db),
+      db.hmset_dict(_id, ctx)
+    )
 
   @staticmethod
   async def delete_entry(_id, db):
@@ -165,9 +195,11 @@ class RateLimiter:
     @param host: (string) the hostname of the rate limiter entry to delete
     @param db: (object) db connection
     """
-    await db.delete(_id)
-    await RateLimiter.__clear_indexes(_id, db)
-    await db.srem(entry_set, _id)
+    await asyncio.gather(
+      db.delete(_id),
+      RateLimiter.__clear_indexes(_id, db),
+      db.srem(entry_set, _id)
+    )
 
   @staticmethod
   async def get_all_entries(db):
@@ -186,10 +218,22 @@ class RateLimiter:
 
   @staticmethod
   async def get_entry_by_id(_id: str, db: AioRedis):
+    """
+    gets entry by id
+
+    @param id: (str) id of entry
+    @param db: redis instance
+    """
     return await db.hgetall(_id, encoding='utf-8')
 
   @staticmethod
   async def get_entry_by_rule_id(rule_id: str, db: AioRedis):
+    """
+    gets entry by rule id
+
+    @param rule_id: (str) id of entry
+    @param db: redis instance
+    """
     entries = []
     entries_keys = await RateLimiter.__search_indexes(entry_rule_id_index, rule_id, db)
     for entry_key in entries_keys:
@@ -199,6 +243,12 @@ class RateLimiter:
 
   @staticmethod
   async def get_entry_by_host(host: str, db: AioRedis):
+    """
+    gets entry by host
+
+    @param host: (str) host of entry
+    @param db: redis instance
+    """
     entries = []
     entries_keys = await RateLimiter.__search_indexes(entry_host_index, host, db)
     for entry_key in entries_keys:
@@ -208,8 +258,20 @@ class RateLimiter:
   
   @staticmethod
   async def increment_entry_count(_id: str, db: AioRedis):
+    """
+    increments entry count
+  
+    @param id: (str) id of entry
+    @param db: redis instance
+    """
     await db.hincrby(_id, 'count', 1)
       
   @staticmethod
   async def decrement_entry_count(_id, db):
+    """
+    decrements entry count
+  
+    @param id: (str) id of entry
+    @param db: redis instance
+    """
     await db.hincrby(_id, 'count', -1)
