@@ -1,21 +1,22 @@
 import pytest
+import pydash
 import mock
+import asynctest
 from aiohttp import web
 from asynctest import CoroutineMock
-from expects import expect, equal, have_keys
+from expects import expect, equal, have_keys, raise_error
 from mock import patch, MagicMock
-
-from api.service import Service, service_validator
+from api.endpoint_cacher import EndpointCacher, endpoint_cache_validator
 from api.util import DB, Error, Validate, Bson
-from api.service.controller import post_handler, get_handler, table, patch_handler, delete_handler
+from api.endpoint_cacher.controller import post_handler, get_handler, patch_handler, delete_handler, patch_handler_response_codes
 
-class TestServiceController:
+class TestEndpointCacherController:
   @pytest.mark.asyncio
   async def test_post_handler(self, *args):
-    with patch.object(service_validator, 'normalized') as normalized_mock:
-      with patch.object(DB, 'get') as get_mock:
+    with patch.object(DB, 'get') as get_mock:
+      with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
-          with patch.object(Service, 'create') as create_mock:
+          with patch.object(EndpointCacher, 'create') as create_mock:
             with patch.object(Error, 'handle') as handle_mock:
               with patch.object(Validate, 'schema') as validate_mock:
                 mock_req = MagicMock()
@@ -26,9 +27,9 @@ class TestServiceController:
                 mock_req.text.assert_called()
                 loads_mock.assert_called()
                 validate_mock.assert_called()
-                get_mock.assert_called_with(mock_req, table)
+                get_mock.assert_called()
+                get_redis_mock.assert_called()
                 create_mock.assert_called()
-                normalized_mock.assert_called_with(mock_test)
                 
                 mock_err = Exception()
                 create_mock.side_effect = mock_err
@@ -38,9 +39,9 @@ class TestServiceController:
   @pytest.mark.asyncio
   async def test_patch_handler(self, *args):
     with patch.object(Validate, 'object_id') as object_id_mock:
-      with patch.object(DB, 'get') as get_mock:
+      with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
-          with patch.object(Service, 'update') as update_mock:
+          with patch.object(EndpointCacher, 'update') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
               with patch.object(Validate, 'schema') as validate_mock:
                 mock_req = MagicMock()
@@ -53,7 +54,7 @@ class TestServiceController:
                 mock_req.text.assert_called()
                 loads_mock.assert_called()
                 update_mock.assert_called()
-                get_mock.assert_called_with(mock_req, table)
+                get_redis_mock.assert_called_with(mock_req)
                 object_id_mock.assert_called_with(mock_query['id'])
                 validate_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
@@ -64,10 +65,48 @@ class TestServiceController:
                 handle_mock.assert_called_with(mock_err)
 
   @pytest.mark.asyncio
+  async def test_patch_handler_response_codes(self, *args):
+    with patch.object(Validate, 'object_id') as object_id_mock:
+      with patch.object(DB, 'get_redis') as get_redis_mock:
+        with patch('json.loads') as loads_mock:
+          with asynctest.patch.object(EndpointCacher, 'add_status_codes') as add_status_codes_mock:
+            with asynctest.patch.object(EndpointCacher, 'remove_status_codes') as remove_status_codes_mock:
+              with patch.object(Error, 'handle') as handle_mock:
+                with patch.object(Validate, 'schema') as validate_mock:
+                  get_redis_mock.return_value = {}
+                  mock_query = {
+                    'id': 'some-value',
+                    'action': 'add'
+                  }
+                  mock_ctx = {
+                    'response_codes': [200]
+                  }
+                  mock_req = MagicMock()
+                  mock_req.text = CoroutineMock()
+                  mock_req.rel_url.query = mock_query
+                  loads_mock.return_value = mock_ctx
+                  await patch_handler_response_codes(mock_req)
+                  object_id_mock.assert_called_with(mock_query['id'])
+                  validate_mock.assert_called_with(mock_ctx, endpoint_cache_validator)
+                  add_status_codes_mock.assert_called_with(mock_ctx['response_codes'], mock_query['id'], {})
+
+                  mock_query = pydash.merge(mock_query, {'action': 'remove'})
+                  mock_req.rel_url.query = mock_query
+                  await patch_handler_response_codes(mock_req)
+                  remove_status_codes_mock.assert_called_with(mock_ctx['response_codes'], mock_query['id'], {})
+
+                  try:
+                    mock_err = Exception
+                    remove_status_codes_mock.side_effect = mock_err
+                    await patch_handler_response_codes(mock_req)
+                  except Exception as err:
+                    handle_mock.assert_called_with(err)
+                  
+  @pytest.mark.asyncio
   async def test_delete_handler(self, *args):
     with patch.object(Validate, 'object_id') as object_id_mock:
-      with patch.object(DB, 'get') as get_mock:
-        with patch.object(Service, 'remove') as remove_mock:
+      with patch.object(DB, 'get_redis') as get_redis_mock:
+        with patch.object(EndpointCacher, 'delete') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
             mock_req = MagicMock()
             mock_req.rel_url.query.get = MagicMock()
@@ -77,7 +116,7 @@ class TestServiceController:
             }
             await delete_handler(mock_req)
             remove_mock.assert_called()
-            get_mock.assert_called_with(mock_req, table)
+            get_redis_mock.assert_called_with(mock_req)
             object_id_mock.assert_called_with(mock_ctx['id'])
             expect(remove_mock.call_args[0][0]).to(equal(mock_ctx['id']))
             
@@ -96,19 +135,24 @@ class TestServiceController:
   @pytest.mark.asyncio
   async def test_get_handler(self, *args):
     with patch.object(Validate, 'object_id') as object_id_mock:
-      with patch.object(DB, 'get') as get_mock:
-        with patch.object(Service, 'get_all') as get_all_mock:
-          with patch.object(Service, 'get_by_id') as get_by_id_mock:
-            with patch.object(Service, 'get_by_state') as get_by_state_mock:
-              with patch.object(Service, 'get_by_secure') as get_by_secure_mock:
+      with patch.object(DB, 'get_redis') as get_mock:
+        with patch.object(EndpointCacher, 'get_all') as get_all_mock:
+          with patch.object(EndpointCacher, 'get_by_id') as get_by_id_mock:
+            with patch.object(EndpointCacher, 'get_by_service_id') as get_by_service_id_mock:
+              with patch.object(EndpointCacher, 'get_by_endpoint') as get_by_endpoint_mock:
                 with patch.object(Error, 'handle') as handle_mock:
                   with patch.object(Bson, 'to_json') as to_json_mock:
                     mock_req = MagicMock()
+                    mock_err = Exception()
+                    get_all_mock.side_effect = mock_err
+                    await get_handler(mock_req)
+                    handle_mock.assert_called_with(mock_err)
+
                     mock_req.rel_url.query = {}
                     await get_handler(mock_req)
-                    get_mock.assert_called_with(mock_req, table)
+                    get_mock.assert_called_with(mock_req)
                     get_all_mock.assert_called()
-
+                    
                     mock_query = {
                       'id': 'some-value'
                     }
@@ -119,21 +163,19 @@ class TestServiceController:
                     get_mock.assert_called()
 
                     mock_query = {
-                      'state': 'some-value'
+                      'service_id': 'some-value'
                     }
                     mock_req.rel_url.query = mock_query
                     await get_handler(mock_req)
-                    get_by_state_mock.assert_called()
-                    expect(get_by_state_mock.call_args[0][0]).to(equal(mock_query['state']))
+                    get_by_service_id_mock.assert_called()
+                    expect(get_by_service_id_mock.call_args[0][0]).to(equal(mock_query['service_id']))
                     get_mock.assert_called()
 
                     mock_query = {
-                      'secure': 'true'
+                      'endpoint': 'some-value'
                     }
                     mock_req.rel_url.query = mock_query
                     await get_handler(mock_req)
-                    get_by_secure_mock.assert_called()
-                    expect(get_by_secure_mock.call_args[0][0]).to(equal(bool(mock_query['secure'])))
+                    get_by_endpoint_mock.assert_called()
+                    expect(get_by_endpoint_mock.call_args[0][0]).to(equal(mock_query['endpoint']))
                     get_mock.assert_called()
-
-

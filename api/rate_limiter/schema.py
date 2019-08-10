@@ -1,49 +1,49 @@
 from cerberus import Validator
+from api.util import Bson
 
 rate_limit_rule_schema = {
-    '_id': {
-        'type': 'string',
-        'required': True
-    },
-    'path': {
-        'type': 'string',
-        'required': True
-    },
-    'max_requests': {
-        'type': 'integer',
-        'required': True
-    },
-    'time_limit': {
-        'type': 'integer',
-        'required': True
-    },
-    'host': {
-        'type': 'string',
-        'required': True
-    },
-    'message': {
-        'type': 'string',
-        'required': True
-    },
-    'status_code': {
-        'type': 'integer',
-        'required': True
-    }
+	'_id': {
+		'type': 'string',
+	},
+	'path': {
+		'type': 'string',
+	},
+	'max_requests': {
+		'type': 'integer',
+		'min': 0
+	},
+	'timeout': {
+		'type': 'integer',
+		'min': 0
+	},
+	'host': {
+		'type': 'string',
+		'regex': r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+	},
+	'message': {
+		'type': 'string',
+	},
+	'status_code': {
+		'type': 'integer',
+	}
 }
 
 rate_limit_entry_schema = {
-    'rule_id': {
-        'type': 'string',
-        'required': True
-    },
-    'host': {
-        'type': 'string',
-        'required': True
-    },
-    'count': {
-        'type': 'integer',
-        'required': True
-    }
+	'_id': {
+		'type': 'string'
+	},
+	'rule_id': {
+		'type': 'string',
+		'check_with': Bson.validate_schema_id
+	},
+	'host': {
+		'type': 'string',
+		'regex': r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+	},
+	'count': {
+		'type': 'integer',
+		'min': 0
+	}
 }
 
 rate_limit_rule_validator = Validator(rate_limit_rule_schema)

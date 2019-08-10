@@ -2,14 +2,14 @@ import asyncio
 import bson
 from api.service import Service
 from api.util import DB
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorCollection
 from cerberus import Validator
 from .schema import request_validator_schema, request_validator
 from password_strength import PasswordPolicy, PasswordStats
 
 class RequestValidator:
 	@staticmethod
-	async def create(ctx, request_validator_db, service_db):
+	async def create(ctx: object, request_validator_db: AsyncIOMotorCollection, service_db: AsyncIOMotorCollection):
 		"""
 		Creates a request validation entry.
 
@@ -21,7 +21,7 @@ class RequestValidator:
 		await request_validator_db.insert_one(ctx)
 
 	@staticmethod
-	async def update(request_validator_id, ctx, db):
+	async def update(request_validator_id: str, ctx: object, db: AsyncIOMotorCollection):
 		"""
 		Updates a request validation entry.
 
@@ -33,7 +33,7 @@ class RequestValidator:
 		await db.update_one({'_id': bson.ObjectId(request_validator_id)}, {'$set': ctx})
         
 	@staticmethod
-	async def delete(id, db):
+	async def delete(_id: str, db: AsyncIOMotorCollection):
 		"""
 		Deletes a request validation entry.
 
@@ -41,10 +41,10 @@ class RequestValidator:
 		@param db: (object) db connection
 		@return: true for success, false for failure (expand on this after discussion)
 		"""
-		await db.delete_one({'_id': bson.ObjectId(id)})
+		await db.delete_one({'_id': bson.ObjectId(_id)})
 			
 	@staticmethod
-	async def get_all(db):
+	async def get_all(db: AsyncIOMotorCollection):
 		"""
 		Gets all request validation entries
 		
@@ -55,11 +55,11 @@ class RequestValidator:
 		return await res.to_list(100)
 	
 	@staticmethod
-	async def get_by_id(id, db):
-		return await db.find_one({'_id': bson.ObjectId(id)})
+	async def get_by_id(_id: str, db: AsyncIOMotorCollection):
+		return await db.find_one({'_id': bson.ObjectId(_id)})
 
 	@staticmethod
-	async def get_by_service_id(service_id, db):
+	async def get_by_service_id(service_id: str, db: AsyncIOMotorCollection):
 		"""
 		Gets a request validation entry by the service_id provided
 
@@ -71,7 +71,7 @@ class RequestValidator:
 		return await res.to_list(100)
 	
 	@staticmethod
-	async def get_by_method(method, db):
+	async def get_by_method(method: str, db: AsyncIOMotorCollection):
 		"""
 		Gets a request validation entry by the method provided
 
@@ -83,7 +83,7 @@ class RequestValidator:
 		return await res.to_list(100)
 	
 	@staticmethod
-	async def get_by_endpoint(endpoint, db):
+	async def get_by_endpoint(endpoint: str, db: AsyncIOMotorCollection):
 		"""
 		Gets a request validation entry by the path provided
 
@@ -95,15 +95,15 @@ class RequestValidator:
 		return await res.to_list(100)
 
 	@staticmethod
-	async def validate_schema(request_body, schema):
+	async def validate_schema(ctx: object, schema: object):
 		"""
 		Validates that the request body provided matches the schema for the request.
 
-		@param request_body: (object) request body in dictionary format
+		@param ctx: (object) context to validate
 		@param schema
 		"""
 		request_validator = Validator(schema)
-		if not request_validator.validate(request_body):
+		if not request_validator.validate(ctx):
 			raise Exception({
 				'message': 'Body provided does not match provided schema',
 				'status_code': 400
@@ -112,10 +112,10 @@ class RequestValidator:
 	@staticmethod
 	async def enforce_policy(password: str, policy: object):
 		"""
-		Validates that the given password matches the provided password policy.
+		validates that the given password matches the provided password policy.
 
 		@param password: (string) password to be validated
-		@param policy: (object) dict containing the password requirements
+		@param policy: (object) password requirements
 		"""
 		password_policy = PasswordPolicy.from_names(
 			length=policy['length'],
@@ -131,9 +131,15 @@ class RequestValidator:
 				'message': 'Password provided does not match policy configured',
 				'status_code': 400
 			})
-
+	
 	@staticmethod
 	async def enforce_strength(password: str, strength_percentage: float):
+		"""
+		enforces passwrd to have specified strength percentage
+	
+		@param password: (str) to enforce strenght
+		@param strength: (float) cutoff strenght percentage
+		"""
 		stats = PasswordStats(password)
 		if stats.strength() < strength_percentage:
 			raise Exception({

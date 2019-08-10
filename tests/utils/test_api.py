@@ -22,7 +22,6 @@ class TestApi:
       expected_auth = {}
       await Api.call(method=expected_method, url=expected_url, params=expected_params, data=expected_data, json=expected_json, cookies=expected_cookies, headers=expected_headers, auth=expected_auth)
       aiohttp_req_mock.assert_called_with(method=expected_method, url=expected_url, params=expected_params, data=expected_data, json=expected_json, cookies=expected_cookies, headers=expected_headers, auth=expected_auth)
-
   
   @asynctest.mock.patch.object(Api, 'call')
   def test_batch(self, *args):
@@ -101,5 +100,3 @@ class TestApi:
     res = await Api.batch_async(expected_requests)
     expect(args[0].call_count).to(equal(len(expected_requests)))
     expect(len(res)).to(equal(len(expected_requests)))
-
-

@@ -3,7 +3,7 @@ networks:
   backend:
 services:
   db:
-    image: "mongo:latest"
+    image: mvertes/alpine-mongo
     ports:
       - 27017:27017
     networks:

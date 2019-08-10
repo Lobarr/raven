@@ -15,3 +15,17 @@ class TestValidate:
       expect(err.args[0]).to(be_a(object))
       expect(err.args[0]).to(have_keys('message', 'status_code'))
     
+  def test_scheme(self, *args):
+    mock_schema_errors = {}
+    try:
+      mock_ctx = {}
+      mock_schema = MagicMock()
+      mock_schema.errors = mock_schema_errors
+      Validate.schema(mock_ctx, mock_schema)
+      mock_schema.validate.assert_called_with(mock_ctx)
+    except Exception as err:
+      expect(err.args[0]).to(have_keys('message', 'status_code', 'errors'))
+      expect(err.args[0]['errors']).to(equal(mock_schema_errors))
+    
+
+    

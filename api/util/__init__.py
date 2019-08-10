@@ -3,7 +3,7 @@ from .bson import Bson
 from .db import DB
 from .token import Token
 from .password import Password
-from .redis import Redis
 from .validate import Validate
 from .bytes import Bytes
 from .crypt import Crypt
+from .api import Api

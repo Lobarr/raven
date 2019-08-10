@@ -56,8 +56,8 @@ async def get_handler(request: web.Request):
   except Exception as err:
     return Error.handle(err)
 
-@router.put('/circuit_breaker')
-async def put_handler(request: web.Request):
+@router.patch('/circuit_breaker')
+async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     circuit_breaker_id = request.rel_url.query['id']

@@ -11,7 +11,12 @@ from api.util import Bytes
 
 class Crypt:
   @staticmethod
-  def generate_key_pair():
+  def generate_key_pair() -> object:
+    """
+    generates key pair  
+  
+    @returns: public and private key pair
+    """
     private_key = ec.generate_private_key(
      ec.SECP256K1(), default_backend()
     )
@@ -32,7 +37,13 @@ class Crypt:
     }
   
   @staticmethod
-  def sign(message: object, private_key: str):
+  def sign(message: object, private_key: str) -> str:
+    """
+    signs a message
+  
+    @param message: (object) message to sign
+    @param private_key: (str) private key to sign with
+    """
     private_key_bytes = serialization.load_pem_private_key(
       private_key.encode('utf-8'),
       password=None,
@@ -42,6 +53,13 @@ class Crypt:
   
   @staticmethod
   def verify(message: object, signature: str, public_key: str) -> bool:
+    """
+    verfies message with digital signature
+  
+    @param message: (object) message to verify
+    @param signature: (str) signature to verify message with 
+    @param public_key: (str) public key to verify message with
+    """
     try:
       public_key_bytes = serialization.load_pem_public_key(
         public_key.encode('utf-8'),
@@ -51,9 +69,16 @@ class Crypt:
       return True
     except InvalidSignature:
       return False
-  
+
   @staticmethod
-  def encrypt(message: object, private_key: str, receiver_public_key):
+  def encrypt(message: object, private_key: str, receiver_public_key: str) -> str:
+    """
+    encrypts message
+  
+    @param message: (object) message to encrypt
+    @param private_key: (str) private key to encrypt message with
+    @param receiver_public_key: (str) public key of person able to decrypt message
+    """
     iv = '000000000000'.encode('utf-8')
     private_key_bytes = serialization.load_pem_private_key(
       private_key.encode('utf-8'),
@@ -81,7 +106,14 @@ class Crypt:
     ciphertext = encryptor.update(Crypt._pad_data(json.dumps(message))) + encryptor.finalize()
     return Bytes.encode_bytes(point + encryptor.tag + ciphertext).decode('utf-8')
 
+  @staticmethod
   def decrypt(message: str, receiver_private_key: str) -> str:
+    """
+    decrypts message
+  
+    @param message: (str) message to decrypt
+    @param receiver_private_key: (str) private key to decrypt with
+    """
     message = Bytes.decode_bytes(message.encode('utf-8'))
     point = message[0:65]
     tag = message[65:81]
@@ -111,21 +143,21 @@ class Crypt:
     dt = decryptor.update(ciphertext) + decryptor.finalize()
     return Crypt._unpad_data(dt).decode('utf-8')
 
-  """
-  appends padding to the provided data
-  """
   @staticmethod
   def _pad_data(data: str):
+    """
+    appends padding to the provided data
+    """
     padder = padding.PKCS7(128).padder()
     padded_data = padder.update(Bytes.str_to_bytes(data))
     padded_data += padder.finalize()  
     return padded_data
 
-  """
-  removes appended padding from the data
-  """
   @staticmethod
   def _unpad_data(dt):
+    """
+    removes appended padding from the data
+    """
     unpadder = padding.PKCS7(128).unpadder()
     data = unpadder.update(dt)
     unpadded = data + unpadder.finalize()

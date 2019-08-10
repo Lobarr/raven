@@ -15,7 +15,7 @@ freeze:
 	pip freeze > requirements.txt
 
 test:
-	pytest tests
+	pytest --cov-report term-missing --cov=api tests
 
 test-watch:
 	ptw --ignore ./client --ignore ./venv -v
