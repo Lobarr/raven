@@ -27,5 +27,5 @@ class Validate:
       raise Exception({
         'message': 'Invalid data provided',
         'status_code': 400,
-        'errors': schema.errors
+        'errors': validator.errors
       })
