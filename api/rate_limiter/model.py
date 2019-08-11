@@ -4,7 +4,7 @@ import asyncio
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
-from api.util import Bson, DB
+from api.util import Bson, DB, Async
 
 rules_set = 'rules_set'
 rule_path_index = 'rule_path_index'
@@ -23,14 +23,15 @@ class RateLimiter:
     @param ctx: indexess to set 
     @param db: redis instance
     """
+    coroutines = []
     for index in [('path', rule_path_index), ('host', rule_host_index), ('status_code', rule_status_code_index)]:
       if index[0] in ctx:
-        await db.hset(index[1], ctx['_id'], ctx[index[0]])
-    
+        coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
     for index in [('rule_id', entry_rule_id_index), ('host', entry_host_index)]:
       if index[0] in ctx:
-        await db.hset(index[1], ctx['_id'], ctx[index[0]])
-  
+        coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
+    await Async.all(coroutines)
+    
   @staticmethod
   async def _clear_indexes(_id: str, db: AioRedis):
     """
@@ -39,8 +40,10 @@ class RateLimiter:
     @param id: id of entity
     @param db: redis instance
     """
+    coroutines = []
     for index in [rule_path_index, rule_host_index, rule_status_code_index, entry_rule_id_index, entry_host_index]:
-      await db.hdel(index, _id)
+      coroutines.append(db.hdel(index, _id))
+    await Async.all(coroutines)
   
   @staticmethod
   async def _search_indexes(index: str, search: str, db: AioRedis) -> list:
@@ -122,13 +125,11 @@ class RateLimiter:
     @param db: (object) db connection
     @return: the records with the provided status_code
     """
-    rules = []
     keys = await RateLimiter._search_indexes(rule_status_code_index, status_code, db)
+    coroutines = []
     for key in keys:
-      rule = await db.hgetall(key, encoding='utf-8')
-      rules.append(rule)
-    return rules
-          
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
   
   @staticmethod
   async def get_rule_by_path(path, db) -> list:
@@ -139,12 +140,11 @@ class RateLimiter:
     @param db: (object) db connection
     @return: the records with the given path
     """
-    rules = []
     keys = await RateLimiter._search_indexes(rule_path_index, path, db)
+    coroutines = []
     for key in keys:
-      rule = await db.hgetall(key, encoding='utf-8')
-      rules.append(rule)
-    return rules
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
 
 
   @staticmethod
@@ -155,12 +155,11 @@ class RateLimiter:
     @param host: (str) host to get
     @param db: db connection
     """
-    rules = []
     keys = await RateLimiter._search_indexes(rule_host_index, host, db)
+    coroutines = []
     for key in keys:
-      rule = await db.hgetall(key, encoding='utf-8')
-      rules.append(rule)
-    return rules
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
   
   @staticmethod
   async def get_all_rules(db: AioRedis) -> list:
@@ -169,12 +168,11 @@ class RateLimiter:
 
     @param db: db connection
     """
-    rules = []
     rules_keys = await DB.fetch_members(rules_set, db)
-    for rule_key in rules_keys:
-      ctx = await db.hgetall(rule_key, encoding='utf-8')
-      rules.append(ctx)
-    return rules
+    coroutines = []
+    for key in rules_keys:
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
           
   @staticmethod
   async def create_entry(ctx, db):
@@ -227,12 +225,11 @@ class RateLimiter:
     @param db: (object) db connection
     @return: the records with the provided statusCode
     """
-    entries = []
     entries_keys = await DB.fetch_members(entry_set, db)
-    for entry_key in entries_keys:
-      ctx = await db.hgetall(entry_key, encoding='utf-8')
-      entries.append(ctx)
-    return entries
+    coroutines = []
+    for key in entries_keys:
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
 
   @staticmethod
   async def get_entry_by_id(_id: str, db: AioRedis):
@@ -252,12 +249,11 @@ class RateLimiter:
     @param rule_id: (str) id of entry
     @param db: redis instance
     """
-    entries = []
     entries_keys = await RateLimiter._search_indexes(entry_rule_id_index, rule_id, db)
-    for entry_key in entries_keys:
-      ctx = await db.hgetall(entry_key, encoding='utf-8')
-      entries.append(ctx)
-    return entries
+    coroutines = []
+    for key in entries_keys:
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
 
   @staticmethod
   async def get_entry_by_host(host: str, db: AioRedis):
@@ -267,12 +263,11 @@ class RateLimiter:
     @param host: (str) host of entry
     @param db: redis instance
     """
-    entries = []
     entries_keys = await RateLimiter._search_indexes(entry_host_index, host, db)
-    for entry_key in entries_keys:
-      ctx = await db.hgetall(entry_key, encoding='utf-8')
-      entries.append(ctx)
-    return entries
+    coroutines = []
+    for key in entries_keys:
+      coroutines.append(db.hgetall(key, encoding='utf-8'))
+    return await Async.all(coroutines)
   
   @staticmethod
   async def increment_entry_count(_id: str, db: AioRedis):

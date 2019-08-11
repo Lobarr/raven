@@ -5,7 +5,7 @@ import asyncio
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
-from api.util import Bson, DB
+from api.util import Bson, DB, Async
 from api.service import Service
 
 endpoint_cache_set = 'endpoint_cache_set'
@@ -21,9 +21,11 @@ class EndpointCacher:
     @param ctx: indexess to set 
     @param db: redis instance
     """
+    coroutines = []
     for index in [('service_id', endpoint_cache_service_id_index), ('endpoint', endpoint_cache_endpoint_index)]:
       if index[0] in ctx:
-        await db.hset(index[1], ctx['_id'], ctx[index[0]])
+        coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
+    await Async.all(coroutines)
 
   @staticmethod
   async def _clear_indexes(_id: str, db: AioRedis):
@@ -33,8 +35,10 @@ class EndpointCacher:
     @param id: id of entity
     @param db: redis instance
     """
+    coroutines = []
     for index in [endpoint_cache_endpoint_index, endpoint_cache_service_id_index]:
-      await db.hdel(index, _id)
+      coroutines.append(db.hdel(index, _id))
+    await Async.all(coroutines)
 
 
   @staticmethod

@@ -5,10 +5,11 @@ from expects import expect, contain, equal, have_keys, have_key
 from asynctest import CoroutineMock
 from api.rate_limiter import RateLimiter
 from api.rate_limiter.model import rule_path_index, rule_host_index, entry_rule_id_index, entry_host_index, rule_status_code_index
-from api.util import DB
+from api.util import DB, Async
 
 class TestRateLimiter:
   @pytest.mark.asyncio
+  @asynctest.patch.object(Async, 'all')
   async def test_set_indexes(self, *args):
     mock_ctx = {
       '_id': 'some-value',
@@ -21,20 +22,21 @@ class TestRateLimiter:
     mock_hset = CoroutineMock()
     mock_db.hset = mock_hset
     await RateLimiter._set_indexes(mock_ctx, mock_db)
-    expect(mock_hset.await_count).to(equal(5))
+    args[0].assert_awaited()
     for call in mock_hset.await_args_list:
       expect([rule_path_index, rule_host_index, rule_status_code_index, entry_rule_id_index, entry_host_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_ctx['_id']))
       expect([mock_ctx[key] for key in mock_ctx.keys()]).to(contain(call[0][2]))
   
   @pytest.mark.asyncio
+  @asynctest.patch.object(Async, 'all')
   async def test__clear_indexes(self, *args):
     mock_id = 'some-value'
     mock_db = MagicMock()
     mock_hdel = CoroutineMock()
     mock_db.hdel = mock_hdel
     await RateLimiter._clear_indexes(mock_id, mock_db)
-    expect(mock_hdel.await_count).to(equal(5))
+    args[0].assert_awaited()
     for call in mock_hdel.await_args_list:
       expect([rule_path_index, rule_host_index, rule_status_code_index, entry_rule_id_index, entry_host_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_id))
@@ -129,6 +131,7 @@ class TestRateLimiter:
     expect(cache).to(equal(expected_rule))
 
   @pytest.mark.asyncio
+  @asynctest.patch.object(Async, 'all')
   async def test_get_rule_by_status_code(self, *args):
     with asynctest.patch.object(RateLimiter, '_search_indexes') as _search_indexes_mock:
       mock_rule = {
@@ -145,13 +148,15 @@ class TestRateLimiter:
       mock_db.hgetall = mock_hgetall
       _search_indexes_mock.return_value = mock_keys
       mock_hgetall.return_value = mock_rule
+      args[0].return_value = [mock_rule]
       rules = await RateLimiter.get_rule_by_status_code(mock_status_code, mock_db)
+      args[0].assert_awaited()
       _search_indexes_mock.assert_awaited()
-      mock_hgetall.assert_awaited()
-      expect(mock_hgetall.await_args[0][0]).to(equal(mock_keys[0]))
+      expect(mock_hgetall.call_args[0][0]).to(equal(mock_keys[0]))
       expect(rules).to(contain(mock_rule))
     
   @pytest.mark.asyncio
+  @asynctest.patch.object(Async, 'all')
   async def test_get_rule_by_path(self, *args):
     with asynctest.patch.object(RateLimiter, '_search_indexes') as _search_indexes_mock:
       mock_rule = {
@@ -167,11 +172,11 @@ class TestRateLimiter:
       mock_hgetall = CoroutineMock()
       mock_db.hgetall = mock_hgetall
       _search_indexes_mock.return_value = mock_keys
-      mock_hgetall.return_value = mock_rule
+      args[0].return_value = [mock_rule]
       rules = await RateLimiter.get_rule_by_path(mocK_path, mock_db)
+      args[0].assert_awaited()
       _search_indexes_mock.assert_awaited()
-      mock_hgetall.assert_awaited()
-      expect(mock_hgetall.await_args[0][0]).to(equal(mock_keys[0]))
+      expect(mock_hgetall.call_args[0][0]).to(equal(mock_keys[0]))
       expect(rules).to(contain(mock_rule))
 
   @pytest.mark.asyncio
