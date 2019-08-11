@@ -19,3 +19,6 @@ test:
 
 test-watch:
 	ptw --ignore ./client --ignore ./venv -v
+
+start-celery:
+	celery worker -A api.util.tasks -l info
