@@ -20,30 +20,36 @@ from api.rate_limiter import rate_limiter_router
 from api.event import event_router
 from api.circuit_breaker import circuit_breaker_router
 from api.endpoint_cacher import endpoint_cacher_router
+from api.proxy import proxy
 
 #utils
 from api.util.env import DB, REDIS
 
 async def init():
   is_prod = os.getenv("ENV") is "prod"
-  app = web.Application()
+  app = web.Application(middlewares=[proxy])
   raven = web.Application()
-  raven['mongo'] = AsyncIOMotorClient(DB).raven
-  raven['redis'] = await aioredis.create_redis(REDIS)
+  app['mongo'] = AsyncIOMotorClient(DB).raven
+  app['redis'] = await aioredis.create_redis(REDIS)
 
   #routes
-  raven.add_routes(ping_router)
-  raven.add_routes(service_router)
-  raven.add_routes(insights_router)
-  raven.add_routes(admin_router)
-  raven.add_routes(request_validator_router)
-  raven.add_routes(rate_limiter_router)
-  raven.add_routes(event_router)
-  raven.add_routes(circuit_breaker_router)
-  raven.add_routes(endpoint_cacher_router)
+  routers = [
+    admin_router, 
+    circuit_breaker_router,
+    endpoint_cacher_router,
+    event_router,
+    insights_router, 
+    ping_router, 
+    rate_limiter_router, 
+    request_validator_router,
+    service_router, 
+  ]
+
+  for router in routers:
+    raven.add_routes(router)
+
   raven.add_routes([web.static('/dashboard', './client/dist')]) if is_prod else None
   app.add_subapp('/raven', raven)
-
   #cors
   cors = aiohttp_cors.setup(app, defaults={
     "*": aiohttp_cors.ResourceOptions(
@@ -55,7 +61,7 @@ async def init():
   for route in list(app.router.routes()):
     cors.add(route)
   
-  await Admin.create_default(raven['mongo']['admin'])
+  await Admin.create_default(app['mongo']['admin'])
 
   return app
 
