@@ -6,4 +6,5 @@ from .password import Password
 from .validate import Validate
 from .bytes import Bytes
 from .crypt import Crypt
+from .promise import Async
 from .api import Api
