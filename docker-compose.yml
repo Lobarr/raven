@@ -16,11 +16,12 @@ services:
       - backend
   celery:
     build: .
-    command: celery worker -A tasks -l info
+    command: nodemon -L --watch api/util/tasks.py --exec "make start-celery" 
     volumes:
       - .:/raven
     environment:
       - REDIS=redis://cache
+      - DB=mongodb://db
     depends_on:
       - db
       - cache
