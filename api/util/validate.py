@@ -1,4 +1,5 @@
 import bson
+import re
 from cerberus import Validator
 
 class Validate:
@@ -30,3 +31,11 @@ class Validate:
         'status_code': 400,
         'errors': validator.errors
       })
+
+  @staticmethod
+  def schema_regex(field, value, error):
+    try:
+      re.compile(value)
+    except re.error as err:
+      error(field, 'Must be a valid regex')
+    
