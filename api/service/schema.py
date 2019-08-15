@@ -1,11 +1,13 @@
 from cerberus import Validator
+from api.util import Validate
 
 service_schema = {
   '_id': {
     'type': 'string'
   },
-  'name': {
+  'path': {
     'type': 'string',
+    'check_with': Validate.schema_regex
   },
   'state': {
     'type': 'string',
@@ -18,7 +20,11 @@ service_schema = {
   },
   'targets': {
     'type': 'list',
-    'default': []
+    'schema': {
+      'type': 'string',
+      'regex': r'^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]|(?:%[0-9a-fA-F][0-9a-fA-F]))+$'
+    },
+    'empty': False,
   },
   'cur_target_index': {
     'type': 'integer',
@@ -27,10 +33,18 @@ service_schema = {
   },
   'whitelisted_hosts': {
     'type': 'list',
+    'schema': {
+      'type': 'string',
+      'regex': r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+    },
     'default': []
   },
   'blacklisted_hosts': {
     'type': 'list',
+    'schema': {
+      'type': 'string',
+      'regex': r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+    },
     'default': []
   },
   'public_key': {
