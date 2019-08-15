@@ -31,6 +31,8 @@ async def init():
   raven = web.Application()
   app['mongo'] = AsyncIOMotorClient(DB).raven
   app['redis'] = await aioredis.create_redis(REDIS)
+  raven['mongo'] = app['mongo']
+  raven['redis'] = app['redis']
 
   #routes
   routers = [
