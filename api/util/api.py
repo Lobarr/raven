@@ -17,17 +17,16 @@ class Api:
     """
     async with aiohttp.request(method=method, url=url, params=params, data=data, json=json, cookies=cookies, headers=headers, auth=auth) as response:
       return {
-        'status': response.status,
-        'reason': response.reason,
-        'method': response.method,
-        'url': str(response.url),
-        'cookies': dict(response.cookies),
         'headers': dict(response.headers),
-        'content_type': response.content_type,
-        'content_length': response.content_length,
         'body_bytes': Bytes.encode_bytes(await response.read()).decode('utf-8'),
         'body_text': await response.text(),
-        'body_json': await response.json()
+        'content_length': response.content_length,
+        'content_type': response.content_type,
+        'cookies': dict(response.cookies),
+        'method': response.method,
+        'reason': response.reason,
+        'status': int(response.status),
+        'url': str(response.url),
       }
 
   @staticmethod
