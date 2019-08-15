@@ -9,16 +9,18 @@ from api.util.env import REDIS, DB
 from api.event import Event
 from api.util import Api
 from api.admin import Admin
+from api.service import Service
 
-tasks = Celery('api.util.tasks', broker=REDIS)
+tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
 
 class Provider(Task):
   _mongo = None
   _redis = None
   _loop = None
   _funcs = {
-    'admin.count': Admin.count,
-    'print': print
+    'Admin.count': Admin.count,
+    'Api.call': Api.call,
+    'Service.advance_target': Service.advance_target,
   }
 
   @property
@@ -40,7 +42,7 @@ class Provider(Task):
     return self._loop
 
 @tasks.task(base=Provider, name='raven.api.task.async')
-def handle_task_async(func, *args):
+def handle_task_async(ctx: dict):
   """
   handles async task
 
@@ -48,21 +50,21 @@ def handle_task_async(func, *args):
   mongo: "mongo:collection_name"
   redis: "redis"
   """
-  _args = list(args)
+  _args = ctx['args']
   for index, arg in enumerate(_args):
     if 'mongo' in arg:
       collection = arg.split(':')[1]
       _args[index] = handle_task_async.mongo[collection]
     elif 'redis' in arg:
       _args[index] = handle_task_async.redis
-  if func in handle_task_async._funcs:
+  if ctx['func'] in handle_task_async._funcs:
     new_args = tuple(_args)
-    return handle_task_async.loop.run_until_complete(handle_task_async._funcs[func](*new_args))
+    return handle_task_async.loop.run_until_complete(handle_task_async._funcs[ctx['func']](*new_args, **ctx['kwargs']))
 
 @tasks.task(base=Provider, name='raven.api.task.sync')
-def handle_task_sync(func, *args):
+def handle_task_sync(ctx):
   """
   handles sync task
   """
-  if func in handle_task_sync._funcs:
-    return handle_task_sync._funcs[func](*args)
+  if ctx['func'] in handle_task_sync._funcs:
+    return handle_task_sync._funcs[ctx['func']](*ctx['args'], **ctx['kwargs'])
