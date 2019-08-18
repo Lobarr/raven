@@ -10,6 +10,8 @@ from api.event import Event
 from api.util import Api
 from api.admin import Admin
 from api.service import Service
+from api.circuit_breaker import CircuitBreaker
+from api.event import Event
 
 tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
 
@@ -20,7 +22,13 @@ class Provider(Task):
   _funcs = {
     'Admin.count': Admin.count,
     'Api.call': Api.call,
+    'CircuitBreaker.incr_count': CircuitBreaker.incr_count,
+    'CircuitBreaker.incr_tripped_count': CircuitBreaker.incr_tripped_count,
+    'CircuitBreaker.set_queued': CircuitBreaker.set_queued,
+    'CircuitBreaker.update': CircuitBreaker.update,
+    'Event.handle_event': Event.handle_event,
     'Service.advance_target': Service.advance_target,
+    'Service.update': Service.update,
   }
 
   @property
@@ -52,10 +60,10 @@ def handle_task_async(ctx: dict):
   """
   _args = ctx['args']
   for index, arg in enumerate(_args):
-    if 'mongo' in arg:
+    if pydash.is_string(arg) and 'mongo' in arg:
       collection = arg.split(':')[1]
       _args[index] = handle_task_async.mongo[collection]
-    elif 'redis' in arg:
+    elif pydash.is_string(arg) and 'redis' in arg:
       _args[index] = handle_task_async.redis
   if ctx['func'] in handle_task_async._funcs:
     new_args = tuple(_args)
