@@ -8,6 +8,7 @@ from .schema import service_schema, service_validator
 collection_name = 'service'
 
 class ServiceState(Enum):
+  BROKEN = 'BROKEN'
   DOWN = 'DOWN'
   UP = 'UP'
   OFF = 'OFF'
@@ -199,21 +200,3 @@ class Service:
         'status_code': 400
       })
   
-  @staticmethod
-  async def get_matched_paths(path: str, db: AsyncIOMotorCollection):
-    matches = []
-    async for service in db.find({}):
-      if pydash.has(service, 'path'):
-        match = re.match(service['path'], path)
-        matches.append(pydash.merge(service, {'regex_groups': match.groups()})) if match else None
-    return matches
-
-  @staticmethod
-  def get_best_service(services: list):
-    best = {
-      'regex_groups': ()
-    }
-    for service in services:
-      if pydash.has(service, 'regex_groups') and len(service['regex_groups']) > len(best['regex_groups']):
-        best = service
-    return best

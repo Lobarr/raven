@@ -11,7 +11,7 @@ service_schema = {
   },
   'state': {
     'type': 'string',
-    'allowed': ['DOWN', 'UP', 'OFF'],
+    'allowed': ['BROKEN', 'DOWN', 'UP', 'OFF'],
     'default': 'OFF'
   },
   'secure': {
@@ -29,7 +29,6 @@ service_schema = {
   'cur_target_index': {
     'type': 'integer',
     'default': 0,
-    'dependencies': 'targets'
   },
   'whitelisted_hosts': {
     'type': 'list',

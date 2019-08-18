@@ -8,3 +8,4 @@ from .bytes import Bytes
 from .crypt import Crypt
 from .promise import Async
 from .api import Api
+from .regex import Regex
