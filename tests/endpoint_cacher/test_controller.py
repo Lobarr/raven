@@ -137,7 +137,7 @@ class TestEndpointCacherController:
     with patch.object(Validate, 'object_id') as object_id_mock:
       with patch.object(DB, 'get_redis') as get_mock:
         with patch.object(EndpointCacher, 'get_all') as get_all_mock:
-          with patch.object(EndpointCacher, 'get_by_id') as get_by_id_mock:
+          with asynctest.patch.object(EndpointCacher, 'get_by_id') as get_by_id_mock:
             with patch.object(EndpointCacher, 'get_by_service_id') as get_by_service_id_mock:
               with patch.object(EndpointCacher, 'get_by_endpoint') as get_by_endpoint_mock:
                 with patch.object(Error, 'handle') as handle_mock:
@@ -157,6 +157,7 @@ class TestEndpointCacherController:
                       'id': 'some-value'
                     }
                     mock_req.rel_url.query = mock_query
+                    get_by_id_mock.return_value = {}
                     await get_handler(mock_req)
                     get_by_id_mock.assert_called()
                     expect(get_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))

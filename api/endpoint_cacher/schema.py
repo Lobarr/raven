@@ -6,7 +6,7 @@ endpoint_cache_schema = {\
     'type': 'string'
   },
   'service_id': {
-    'type': 'string', 
+    'type': 'string',
     'check_with': Bson.validate_schema_id
   },
   'endpoint': {

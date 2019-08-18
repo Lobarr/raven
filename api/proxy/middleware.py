@@ -26,7 +26,7 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
       cooldown_eta = datetime.utcnow() + timedelta(seconds=breaker['cooldown'])
       handle_task_async.s({
         'func': 'Service.update',
-        'args': [str(service['_id']), {'state': ServiceState.BROKEN.name}, f'mongo:{service_controller.table}'],
+        'args': [str(service['_id']), {'state': ServiceState.DOWN.name}, f'mongo:{service_controller.table}'],
         'kwargs': {}
       }).apply_async()
       if not queued or queued is 'False':
@@ -47,10 +47,9 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
         }).apply_async(eta=cooldown_eta)
       events = await Event.get_by_circuit_breaker_id(str(breaker['_id']), DB.get(request, event_controller.table))
       for event in events:
-        logging.info(event)
         handle_task_async.s({
           'func': 'Event.handle_event',
-          'args': [event],
+          'args': [Bson.to_json(event)],
           'kwargs': {}
         }).apply_async()
   await Async.all([
@@ -76,7 +75,7 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
         'message': 'Not found',
         'status_code': 404
       })
-    if service['state'] in [ServiceState.DOWN.name, ServiceState.OFF.name, ServiceState.BROKEN.name]:
+    if service['state'] in [ServiceState.DOWN.name, ServiceState.OFF.name]:
       raise Exception({
         'message': f"Service is currently {service['state']}",
         'status_code': 503
@@ -99,7 +98,6 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
 
     if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
       await handle_circuit_breaker(breaker, service, request, req)
-
     handle_task_async.s({
       'func': 'Service.advance_target',
       'args': [str(service['_id']), f'mongo:{service_controller.table}'],

@@ -137,32 +137,79 @@ class CircuitBreaker:
   
   @staticmethod
   async def incr_tripped_count(_id: str, db: AsyncIOMotorCollection):
-     await db.update_one({'_id': bson.ObjectId(_id)}, {'$inc': {'tripped_count': 1}})
+    """
+    increments tripped count
+
+    @param id: (str) id of circuit breaker
+    @param db: mongo instance
+    """
+    await db.update_one({'_id': bson.ObjectId(_id)}, {'$inc': {'tripped_count': 1}})
 
   @staticmethod
   def count_key(_id):
+    """
+    returns count key
+    """
     return f'{_id}.count'
   
   @staticmethod
   def queued_key(_id):
+    """
+    returns queued key
+    """
     return f'{_id}.queued'
 
   @staticmethod
   async def incr_count(_id: str, db: AioRedis):
+    """
+    increments count
+
+    @param id: (str) id of circuit breaker
+    @param db: redis instance
+    """
     await db.incr(CircuitBreaker.count_key(_id))
   
   @staticmethod
   async def get_count(_id: str, db: AioRedis):
+    """
+    gets count 
+
+    @param id: (str) id of circuit breaker
+    @param db: redis instance 
+    """
     return await db.get(CircuitBreaker.count_key(_id), encoding='utf-8')
 
   @staticmethod
   async def set_count(_id: str, count: int, timeout: int, db: AioRedis):
+    """
+    sets count 
+
+    @param id: (str) id of circuit breaker
+    @param count: (int) number to set
+    @param timeout: (int) redis expire time
+    @param db: redis instance
+    """
     await db.set(CircuitBreaker.count_key(_id), count, expire=timeout)
 
   @staticmethod
   async def set_queued(_id: str, queued: str, timeout: int, db: AioRedis):
+    """
+    sets queued 
+
+    @param id: (str) id of circuit breaker
+    @param queued: (str) queue to set
+    @param timeout: (int) redis expire time
+    @param db: redis instance
+    """
+
     await db.set(CircuitBreaker.queued_key(_id), queued, expire=timeout)
 
   @staticmethod
   async def get_queued(_id: str, db: AioRedis):
-    return await db.get(CircuitBreaker.queued_key(_id))
+    """
+    gets queued 
+
+    @param id: (str) id of circuit breaker
+    @param db: redis instance 
+    """
+    return await db.get(CircuitBreaker.queued_key(_id), encoding='utf-8')

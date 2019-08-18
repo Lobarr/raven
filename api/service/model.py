@@ -8,7 +8,6 @@ from .schema import service_schema, service_validator
 collection_name = 'service'
 
 class ServiceState(Enum):
-  BROKEN = 'BROKEN'
   DOWN = 'DOWN'
   UP = 'UP'
   OFF = 'OFF'
