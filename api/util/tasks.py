@@ -11,7 +11,7 @@ from api.util import Api
 from api.admin import Admin
 from api.service import Service
 from api.circuit_breaker import CircuitBreaker
-from api.event import Event
+from api.endpoint_cacher import EndpointCacher
 
 tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
 
@@ -27,15 +27,16 @@ class Provider(Task):
     'CircuitBreaker.set_queued': CircuitBreaker.set_queued,
     'CircuitBreaker.update': CircuitBreaker.update,
     'Event.handle_event': Event.handle_event,
+    'EndpointCacher.set_cache': EndpointCacher.set_cache,
     'Service.advance_target': Service.advance_target,
     'Service.update': Service.update,
   }
 
   @property
   def mongo(self):
-      if self._mongo is None:
-          self._mongo = AsyncIOMotorClient(DB).raven
-      return self._mongo
+    if self._mongo is None:
+        self._mongo = AsyncIOMotorClient(DB).raven
+    return self._mongo
   
   @property
   def redis(self):

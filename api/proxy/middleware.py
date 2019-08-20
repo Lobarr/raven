@@ -3,16 +3,19 @@ import asyncio
 import logging
 import time
 import re
+import json
 from datetime import datetime, timedelta
 from multidict import CIMultiDict
 from time import time
 from aiohttp import web
-from api.util import DB, Api, Async, Bson, Error, Bytes, Regex
+
+from api.util import DB, Api, Async, Bson, Error, Bytes, Regex, Password
 from api.util.tasks import handle_task_async, handle_task_sync
 from api.admin import Admin
 from api.service import Service, ServiceState, controller as service_controller
 from api.circuit_breaker import CircuitBreaker, CircuitBreakerStatus, controller as circuit_breaker_controller
 from api.event import Event, controller as event_controller
+from api.endpoint_cacher import EndpointCacher
 
 async def handle_circuit_breaker(breaker: object, service: object, request: web.Request, req: object):
   if req['status'] in breaker['status_codes']:
@@ -59,7 +62,7 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
 
 @web.middleware
 async def proxy(request: web.Request, handler: web.RequestHandler):
-  try:
+  # try:
     if pydash.starts_with(request.path_qs, '/raven'):
       return await handler(request)
 
@@ -69,6 +72,7 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     ])
     service = Regex.best_match(matched_services)
     breaker = Regex.best_match(matched_breakers)
+    endpoint_cacher = await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) if not pydash.is_empty(service) else None
 
     if pydash.is_empty(matched_services):
       raise Exception({
@@ -94,15 +98,42 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
       'cookies':  dict(request.cookies),
       'headers': pydash.omit(dict(request.headers), 'Host'),
     }
-    req = await Api.call(**req_ctx)
 
+    req = None
+    req_cache = None
+    req_ctx_hash = None
+    if not pydash.is_empty(endpoint_cacher):
+      req_ctx_hash = Password.hash(json.dumps(req_ctx))
+      req_cache = await EndpointCacher.get_cache(req_ctx_hash, DB.get_redis(request))
+      logging.info(endpoint_cacher)
+      logging.info(req_cache)
+
+    if pydash.is_empty(req_cache):
+      req = await Api.call(**req_ctx)
+      if not pydash.is_empty(req_ctx_hash):
+        # handle_task_async.s({
+        #   'func': 'EndpointCacher.set_cache',
+        #   'args': [req_ctx_hash, req, int(endpoint_cacher['timeout']), 'redis'],
+        #   'kwargs': {}
+        # }).apply_async()
+        logging.info(req_ctx_hash)
+        logging.info(req)
+        logging.info(endpoint_cacher)
+
+    else:
+      logging.info(req_cache)
+      # req = req_cache
+
+    checks = []
     if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
-      await handle_circuit_breaker(breaker, service, request, req)
+      checks.append(handle_circuit_breaker(breaker, service, request, req))
+    await Async.all(checks)
+
     handle_task_async.s({
       'func': 'Service.advance_target',
       'args': [str(service['_id']), f'mongo:{service_controller.table}'],
       'kwargs': {}
     }).apply_async()
     return web.Response(body=Bytes.decode_bytes(req['body_bytes']), status=req['status'], content_type=req['content_type'], headers=CIMultiDict(pydash.omit(req['headers'], 'Content-Type', 'Transfer-Encoding', 'Content-Encoding')))
-  except Exception as err:
-    return Error.handle(err)
+  # except Exception as err:
+  #   return Error.handle(err)

@@ -9,7 +9,7 @@ endpoint_cache_schema = {\
     'type': 'string',
     'check_with': Bson.validate_schema_id
   },
-  'endpoint': {
+  'path': {
     'type': 'string',
   },
   'timeout': {

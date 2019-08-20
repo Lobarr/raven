@@ -10,7 +10,7 @@ from api.service import Service
 
 endpoint_cache_set = 'endpoint_cache_set'
 endpoint_cache_service_id_index = 'endpoint_cache_service_id'
-endpoint_cache_endpoint_index = 'endpoint_cache_endpoint_index'
+endpoint_cache_path_index = 'endpoint_cache_path_index'
 
 class EndpointCacher:
   @staticmethod
@@ -22,7 +22,7 @@ class EndpointCacher:
     @param db: redis instance
     """
     coroutines = []
-    for index in [('service_id', endpoint_cache_service_id_index), ('endpoint', endpoint_cache_endpoint_index)]:
+    for index in [('service_id', endpoint_cache_service_id_index), ('endpoint', endpoint_cache_path_index)]:
       if index[0] in ctx:
         coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
     await Async.all(coroutines)
@@ -36,7 +36,7 @@ class EndpointCacher:
     @param db: redis instance
     """
     coroutines = []
-    for index in [endpoint_cache_endpoint_index, endpoint_cache_service_id_index]:
+    for index in [endpoint_cache_path_index, endpoint_cache_service_id_index]:
       coroutines.append(db.hdel(index, _id))
     await Async.all(coroutines)
 
@@ -81,7 +81,7 @@ class EndpointCacher:
       EndpointCacher._set_indexes(ctx, endpoint_cacher_db),
       endpoint_cacher_db.hmset_dict(ctx['_id'], ctx),
       endpoint_cacher_db.sadd(endpoint_cache_set, ctx['_id']),
-      endpoint_cacher_db.expire(ctx['_id'], int(ctx['timeout']))
+      # endpoint_cacher_db.expire(ctx['_id'], int(ctx['timeout']))
     )
   
   @staticmethod
@@ -119,10 +119,11 @@ class EndpointCacher:
     @param db: db connection
     """
     endpoint_cache = await db.hgetall(_id, encoding='utf-8')
+    response_codes = None
     if 'response_codes' in endpoint_cache:
       response_codes_id = endpoint_cache['response_codes']
       response_codes = await db.smembers(response_codes_id, encoding='utf-8')
-    return pydash.merge(endpoint_cache, {'response_codes': response_codes})
+    return pydash.merge(endpoint_cache, {'response_codes': response_codes}) if not pydash.is_empty(response_codes) else endpoint_cache
   
   @staticmethod
   async def get_by_service_id(service_id: str, db: AioRedis) -> list:
@@ -136,26 +137,28 @@ class EndpointCacher:
     endpoint_cache_keys = await EndpointCacher._search_indexes(endpoint_cache_service_id_index, service_id, db)
     for endpoint_cache_key in endpoint_cache_keys:
       ctx = await db.hgetall(endpoint_cache_key, encoding='utf-8')
+      response_codes = None
       if 'response_codes' in ctx:
         response_codes = await db.smembers(ctx['response_codes'], encoding='utf-8')
-      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
+      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}) if not pydash.is_empty(response_codes) else ctx)
     return endpoint_caches
 
   @staticmethod
-  async def get_by_endpoint(endpoint: str, db: AioRedis) -> list:
+  async def get_by_path(path: str, db: AioRedis) -> list:
     """
-    gets endpoint cache by endpoint
+    gets endpoint cache by path
   
-    @param endpoint: (str) endpoint to get
+    @param path: (str) patb to get
     @param db: db connection
     """
     endpoint_caches = []
-    endpoint_cache_keys = await EndpointCacher._search_indexes(endpoint_cache_endpoint_index, endpoint, db)
+    endpoint_cache_keys = await EndpointCacher._search_indexes(endpoint_cache_path_index, path, db)
     for endpoint_cache_key in endpoint_cache_keys:
       ctx = await db.hgetall(endpoint_cache_key, encoding='utf-8')
+      response_codes = None      
       if 'response_codes' in ctx:
         response_codes = await db.smembers(ctx['response_codes'], encoding='utf-8')
-      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
+      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}) if not pydash.is_empty(response_codes) else ctx)
     return endpoint_caches
 
   @staticmethod
@@ -169,9 +172,10 @@ class EndpointCacher:
     endpoint_cache_keys = await DB.fetch_members(endpoint_cache_set, db)
     for endpoint_cache_key in endpoint_cache_keys:
       ctx = await db.hgetall(endpoint_cache_key, encoding='utf-8')
+      response_codes = None
       if 'response_codes' in ctx:
         response_codes = await db.smembers(ctx['response_codes'], encoding='utf-8')
-      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}))
+      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}) if not pydash.is_empty(response_codes) else ctx)
     return endpoint_caches
 
   @staticmethod
@@ -209,3 +213,25 @@ class EndpointCacher:
       })
     for status_code in status_codes:
       await db.srem(endpoint_cache['response_codes'], status_code)
+
+  @staticmethod
+  async def set_cache(_hash: str, ctx: object, timeout: int, db: AioRedis):
+    """
+    sets cache
+
+    @param _hash: (str) hash of request
+    @param ctx: (object) body of response
+    @param db: redis instance
+    """
+    await db.hmset_dict(_hash, ctx)
+    await db.expire(_hash, timeout)
+
+  @staticmethod
+  async def get_cache(_hash: str, db: AioRedis):
+    """
+    gets cache
+
+    @param _hash: (str) hash of request
+    @param db: redis instance
+    """
+    return await db.hgetall(_hash, encoding='utf-8')
