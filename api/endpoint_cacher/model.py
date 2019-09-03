@@ -22,7 +22,7 @@ class EndpointCacher:
     @param db: redis instance
     """
     coroutines = []
-    for index in [('service_id', endpoint_cache_service_id_index), ('endpoint', endpoint_cache_path_index)]:
+    for index in [('service_id', endpoint_cache_service_id_index), ('path', endpoint_cache_path_index)]:
       if index[0] in ctx:
         coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
     await Async.all(coroutines)

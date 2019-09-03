@@ -2,7 +2,7 @@ import asynctest
 import pytest
 import pydash
 from api.endpoint_cacher import EndpointCacher
-from api.endpoint_cacher.model import endpoint_cache_service_id_index, endpoint_cache_endpoint_index
+from api.endpoint_cacher.model import endpoint_cache_service_id_index, endpoint_cache_path_index
 from api.util import DB
 from api.service import Service
 from mock import MagicMock, patch
@@ -15,7 +15,7 @@ class TestEndpointCacher:
     mock_ctx = {
       '_id': 'some-value',
       'service_id': 'some-id',
-      'endpoint': 'some-endpoint'
+      'path': 'some-endpoint'
     }
     mock_db = MagicMock()
     mock_hset = CoroutineMock()
@@ -23,9 +23,9 @@ class TestEndpointCacher:
     await EndpointCacher._set_indexes(mock_ctx, mock_db)
     expect(mock_hset.await_count).to(equal(2))
     for call in mock_hset.await_args_list:
-      expect([endpoint_cache_endpoint_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
+      expect([endpoint_cache_path_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_ctx['_id']))
-      expect([mock_ctx['service_id'], mock_ctx['endpoint']]).to(contain(call[0][2]))
+      expect([mock_ctx['service_id'], mock_ctx['path']]).to(contain(call[0][2]))
 
   @pytest.mark.asyncio
   async def test__clear_indexes(self, *args):
@@ -36,7 +36,7 @@ class TestEndpointCacher:
     await EndpointCacher._clear_indexes(mock_id, mock_db)
     expect(mock_hdel.await_count).to(equal(2))
     for call in mock_hdel.await_args_list:
-      expect([endpoint_cache_endpoint_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
+      expect([endpoint_cache_path_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_id))
 
   @pytest.mark.asyncio
@@ -161,17 +161,17 @@ class TestEndpointCacher:
 
   
   @pytest.mark.asyncio
-  async def test_get_by_endpoint(self, *args):
+  async def test_get_by_path(self, *args):
     with asynctest.patch.object(EndpointCacher, '_search_indexes') as _search_indes_mock:
       response_codes_id = 'some-id'
       expected_cache = {
-        'endpoint': 'some-endpoint',
+        'path': 'some-path',
         'timeout': 10,
         'response_codes': response_codes_id,
         '_id': 'some-id'
       }
       expected_response_codes = [200, 300]
-      mock_endpoint = 'some-value'
+      mock_path = 'some-value'
       mock_keys = ['some-id']
       mock_db = MagicMock()
       mock_hgetall = CoroutineMock()
@@ -181,8 +181,8 @@ class TestEndpointCacher:
       mock_db.hgetall = mock_hgetall
       mock_db.smembers = mock_smembers
       mock_smembers.return_value = expected_response_codes
-      caches = await EndpointCacher.get_by_endpoint(mock_endpoint, mock_db)
-      _search_indes_mock.assert_awaited_with(endpoint_cache_endpoint_index, mock_endpoint, mock_db)
+      caches = await EndpointCacher.get_by_path(mock_path, mock_db)
+      _search_indes_mock.assert_awaited_with(endpoint_cache_path_index, mock_path, mock_db)
       mock_hgetall.assert_awaited()
       expect(mock_hgetall.await_args[0][0]).to(equal(mock_keys[0]))
       mock_smembers.assert_awaited()
