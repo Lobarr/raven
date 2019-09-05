@@ -30,10 +30,6 @@ circuit_breaker_schema = {
     'type': 'string',
     'allowed': ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATH']
   },
-  'path': {
-    'type': 'string',
-    'check_with': Validate.schema_regex
-  },
   'threshold': {
     'type': 'float',
     'min': 0.0,
