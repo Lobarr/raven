@@ -139,7 +139,6 @@ class TestEndpointCacherController:
         with patch.object(EndpointCacher, 'get_all') as get_all_mock:
           with asynctest.patch.object(EndpointCacher, 'get_by_id') as get_by_id_mock:
             with patch.object(EndpointCacher, 'get_by_service_id') as get_by_service_id_mock:
-              with patch.object(EndpointCacher, 'get_by_path') as get_by_path_mock:
                 with patch.object(Error, 'handle') as handle_mock:
                   with patch.object(Bson, 'to_json') as to_json_mock:
                     mock_req = MagicMock()
@@ -172,11 +171,3 @@ class TestEndpointCacherController:
                     expect(get_by_service_id_mock.call_args[0][0]).to(equal(mock_query['service_id']))
                     get_mock.assert_called()
 
-                    mock_query = {
-                      'path': 'some-value'
-                    }
-                    mock_req.rel_url.query = mock_query
-                    await get_handler(mock_req)
-                    get_by_path_mock.assert_called()
-                    expect(get_by_path_mock.call_args[0][0]).to(equal(mock_query['path']))
-                    get_mock.assert_called()

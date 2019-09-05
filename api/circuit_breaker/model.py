@@ -79,17 +79,6 @@ class CircuitBreaker:
     return await res.to_list(100)
 
   @staticmethod
-  async def get_by_path(path: str, db: AsyncIOMotorCollection):
-    """
-    gets cirbuit breaker by path
-  
-    @param path: (str) path of cirbuit breaker
-    @param db: mongo instance
-    """
-    res = db.find({'path': path})
-    return await res.to_list(100)
-
-  @staticmethod
   async def get_by_threshold(threshold: float, db: AsyncIOMotorCollection):
     """
     gets cirbuit breaker by threshold

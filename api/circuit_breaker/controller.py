@@ -45,8 +45,6 @@ async def get_handler(request: web.Request):
         circuit_breakers = await CircuitBreaker.get_by_status_code(int(request.rel_url.query.get('status_code')), DB.get(request, table))
       elif 'method' in request.rel_url.query:
         circuit_breakers = await CircuitBreaker.get_by_method(request.rel_url.query.get('method'), DB.get(request, table))
-      elif 'path' in request.rel_url.query:
-        circuit_breakers = await CircuitBreaker.get_by_path(request.rel_url.query.get('path'), DB.get(request, table))
       elif 'threshold' in request.rel_url.query:
         circuit_breakers = await CircuitBreaker.get_by_threshold(float(request.rel_url.query.get('threshold')), DB.get(request, table))
     return web.json_response({

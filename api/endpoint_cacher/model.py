@@ -2,6 +2,7 @@ import bson
 import pydash
 import logging
 import asyncio
+import json
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
@@ -10,7 +11,6 @@ from api.service import Service
 
 endpoint_cache_set = 'endpoint_cache_set'
 endpoint_cache_service_id_index = 'endpoint_cache_service_id'
-endpoint_cache_path_index = 'endpoint_cache_path_index'
 
 class EndpointCacher:
   @staticmethod
@@ -22,7 +22,7 @@ class EndpointCacher:
     @param db: redis instance
     """
     coroutines = []
-    for index in [('service_id', endpoint_cache_service_id_index), ('path', endpoint_cache_path_index)]:
+    for index in [('service_id', endpoint_cache_service_id_index)]:
       if index[0] in ctx:
         coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
     await Async.all(coroutines)
@@ -36,7 +36,7 @@ class EndpointCacher:
     @param db: redis instance
     """
     coroutines = []
-    for index in [endpoint_cache_path_index, endpoint_cache_service_id_index]:
+    for index in [endpoint_cache_service_id_index]:
       coroutines.append(db.hdel(index, _id))
     await Async.all(coroutines)
 
@@ -144,24 +144,6 @@ class EndpointCacher:
     return endpoint_caches
 
   @staticmethod
-  async def get_by_path(path: str, db: AioRedis) -> list:
-    """
-    gets endpoint cache by path
-  
-    @param path: (str) patb to get
-    @param db: db connection
-    """
-    endpoint_caches = []
-    endpoint_cache_keys = await EndpointCacher._search_indexes(endpoint_cache_path_index, path, db)
-    for endpoint_cache_key in endpoint_cache_keys:
-      ctx = await db.hgetall(endpoint_cache_key, encoding='utf-8')
-      response_codes = None      
-      if 'response_codes' in ctx:
-        response_codes = await db.smembers(ctx['response_codes'], encoding='utf-8')
-      endpoint_caches.append(pydash.merge(ctx, {'response_codes': response_codes}) if not pydash.is_empty(response_codes) else ctx)
-    return endpoint_caches
-
-  @staticmethod
   async def get_all(db: AioRedis) -> list:
     """
     gets all endpoint caches
@@ -223,7 +205,9 @@ class EndpointCacher:
     @param ctx: (object) body of response
     @param db: redis instance
     """
-    await db.hmset_dict(_hash, ctx)
+    omit_keys = list(filter(lambda key : ctx[key] is None, ctx.keys()))
+    logging.info(omit_keys)
+    await db.set(_hash, json.dumps(pydash.omit(ctx, *omit_keys)))
     await db.expire(_hash, timeout)
 
   @staticmethod
@@ -234,4 +218,4 @@ class EndpointCacher:
     @param _hash: (str) hash of request
     @param db: redis instance
     """
-    return await db.hgetall(_hash, encoding='utf-8')
+    return await db.get(_hash, encoding='utf-8')

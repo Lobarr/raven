@@ -110,19 +110,6 @@ class TestCircuitBreaker:
     mock_db.find.assert_called()
     mock_db.find.assert_called_with({'method': mock_method})
     mock_cursor.to_list.assert_called()
-
-  @pytest.mark.asyncio
-  async def test_get_by_path(self, *args):
-    mock_path = 'some-value'
-    mock_db = CoroutineMock()
-    mock_cursor = MagicMock()
-    mock_cursor.to_list = CoroutineMock()
-    mock_db.find = MagicMock()
-    mock_db.find.return_value = mock_cursor
-    await CircuitBreaker.get_by_path(mock_path, mock_db)
-    mock_db.find.assert_called()
-    mock_db.find.assert_called_with({'path': mock_path})
-    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_by_threshold(self, *args):
