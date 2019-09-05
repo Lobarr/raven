@@ -15,7 +15,7 @@ from api.endpoint_cacher import EndpointCacher
 
 tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
 
-class Provider(Task):
+class TaskProvider(Task):
   _mongo = None
   _redis = None
   _loop = None
@@ -50,7 +50,7 @@ class Provider(Task):
       self._loop = asyncio.get_event_loop()
     return self._loop
 
-@tasks.task(base=Provider, name='raven.api.task.async')
+@tasks.task(base=TaskProvider, name='raven.api.task.async')
 def handle_task_async(ctx: dict):
   """
   handles async task
@@ -70,7 +70,7 @@ def handle_task_async(ctx: dict):
     new_args = tuple(_args)
     return handle_task_async.loop.run_until_complete(handle_task_async._funcs[ctx['func']](*new_args, **ctx['kwargs']))
 
-@tasks.task(base=Provider, name='raven.api.task.sync')
+@tasks.task(base=TaskProvider, name='raven.api.task.sync')
 def handle_task_sync(ctx):
   """
   handles sync task
