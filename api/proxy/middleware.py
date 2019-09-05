@@ -26,13 +26,18 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
     failures_rate = breaker['tripped_count'] / int(breaker_count)
     if failures_rate >= (1 - breaker['threshold']):
       queued = await CircuitBreaker.get_queued(str(breaker['_id']), DB.get_redis(request))
-      cooldown_eta = datetime.utcnow() + timedelta(seconds=breaker['cooldown'])
-      handle_task_async.s({
-        'func': 'Service.update',
-        'args': [str(service['_id']), {'state': ServiceState.DOWN.name}, f'mongo:{service_controller.table}'],
-        'kwargs': {}
-      }).apply_async()
       if not queued or queued is 'False':
+        cooldown_eta = datetime.utcnow() + timedelta(seconds=breaker['cooldown'])
+        handle_task_async.s({
+          'func': 'Service.update',
+          'args': [str(service['_id']), {'state': ServiceState.DOWN.name}, f'mongo:{service_controller.table}'],
+          'kwargs': {}
+        }).apply_async()
+        handle_task_async.s({
+          'func': 'CircuitBreaker.set_queued',
+          'args': [str(breaker['_id']), 'True', breaker['cooldown'], 'redis'],
+          'kwargs': {}
+        }).apply_async()
         handle_task_async.s({
           'func': 'Service.update',
           'args': [str(service['_id']), {'state': ServiceState.UP.name}, f'mongo:{service_controller.table}'],
@@ -40,21 +45,21 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
         }).apply_async(eta=cooldown_eta)
         handle_task_async.s({
           'func': 'CircuitBreaker.set_queued',
-          'args': [str(breaker['_id']), 'True', breaker['cooldown'], 'redis'],
-          'kwargs': {}
-        }).apply_async()
-        handle_task_async.s({
-          'func': 'CircuitBreaker.set_queued',
           'args': [str(breaker['_id']), 'False', breaker['cooldown'], 'redis'],
           'kwargs': {}
         }).apply_async(eta=cooldown_eta)
-      events = await Event.get_by_circuit_breaker_id(str(breaker['_id']), DB.get(request, event_controller.table))
-      for event in events:
         handle_task_async.s({
-          'func': 'Event.handle_event',
-          'args': [Bson.to_json(event)],
+          'func': 'CircuitBreaker.update',
+          'args': [str(breaker['_id']), {'tripped_count': 0}, f'mongo:{circuit_breaker_controller.table}'],
           'kwargs': {}
-        }).apply_async()
+        }).apply_async(eta=cooldown_eta)
+        events = await Event.get_by_circuit_breaker_id(str(breaker['_id']), DB.get(request, event_controller.table))
+        for event in events:
+          handle_task_async.s({
+            'func': 'Event.handle_event',
+            'args': [Bson.to_json(event)],
+            'kwargs': {}
+          }).apply_async()
   await Async.all([
     CircuitBreaker.incr_tripped_count(str(breaker['_id']), DB.get(request, circuit_breaker_controller.table)),
     CircuitBreaker.incr_count(str(breaker['_id']), DB.get_redis(request))
@@ -91,25 +96,23 @@ async def handle_request(request: web.Request, service: object, endpoint_cacher:
   req_ctx_hash = None
   
   if not pydash.is_empty(endpoint_cacher):
-    req_ctx_hash = Hasher.hash(json.dumps(req_ctx))
+    req_ctx_hash = Hasher.hash_sha_256(json.dumps(req_ctx))
     req_cache = await EndpointCacher.get_cache(req_ctx_hash, DB.get_redis(request))
-    logging.info(endpoint_cacher)
-    logging.info(req_cache)
 
   if pydash.is_empty(req_cache):
+    logging.info('making api call')
     req = await Api.call(**req_ctx)
-    if not pydash.is_empty(req_ctx_hash):
-      handle_task_async.s({
+    if pydash.is_empty(req_ctx_hash):
+       req_ctx_hash = Hasher.hash_sha_256(json.dumps(req_ctx))
+    not pydash.is_empty(endpoint_cacher) and handle_task_async.s({
         'func': 'EndpointCacher.set_cache',
         'args': [req_ctx_hash, req, int(endpoint_cacher['timeout']), 'redis'],
         'kwargs': {}
       }).apply_async()
-      logging.info(req_ctx_hash)
-      logging.info(req)
-      logging.info(endpoint_cacher)
   else:
-    logging.info(req_cache)
-    req = req_cache
+    req = json.loads(req_cache)
+  
+  return req
 
 @web.middleware
 async def proxy(request: web.Request, handler: web.RequestHandler):
@@ -117,27 +120,30 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     if pydash.starts_with(request.path_qs, '/raven'):
       return await handler(request)
 
-    matched_services, matched_breakers = await Async.all([
+    prereq = await Async.all([
       Regex.get_matched_paths(request.path, DB.get(request, service_controller.table)),
-      Regex.get_matched_paths(request.path, DB.get(request, circuit_breaker_controller.table))
     ])
-    service = Regex.best_match(matched_services)
-    breaker = Regex.best_match(matched_breakers)
-    endpoint_cacher = not pydash.is_empty(service) and await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) or None
-
-    await handle_service(service)
+    service = Regex.best_match(prereq[0])
+    await handle_service(service, request.remote)
+    breakers = await CircuitBreaker.get_by_service_id(str(service['_id']), DB.get(request, circuit_breaker_controller.table))
+    breaker = breakers[0] if len(breakers) > 0 else None
+    endpoint_cachers = not pydash.is_empty(service) and await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) or None
+    endpoint_cacher = endpoint_cachers[0] if len(endpoint_cachers) > 0 else None
     req = await handle_request(request, service, endpoint_cacher)
-
     checks = []
-    if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
-      checks.append(handle_circuit_breaker(breaker, service, request, req))
-    await Async.all(checks)
 
+    if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
+      if req['status'] in breaker['status_codes']:
+        checks.append(handle_circuit_breaker(breaker, service, request, req))
+      else:
+        await CircuitBreaker.incr_count(str(breaker['_id']), DB.get_redis(request))
+    await Async.all(checks)
     handle_task_async.s({
       'func': 'Service.advance_target',
       'args': [str(service['_id']), f'mongo:{service_controller.table}'],
       'kwargs': {}
     }).apply_async()
+
     return web.Response(body=Bytes.decode_bytes(req['body_bytes']), status=req['status'], content_type=req['content_type'], headers=CIMultiDict(pydash.omit(req['headers'], 'Content-Type', 'Transfer-Encoding', 'Content-Encoding')))
   except Exception as err:
     return Error.handle(err)
