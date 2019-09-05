@@ -194,7 +194,7 @@ class CircuitBreaker:
   @staticmethod
   async def set_queued(_id: str, queued: str, timeout: int, db: AioRedis):
     """
-    sets queued 
+    sets queued (if cooldown has been queued)
 
     @param id: (str) id of circuit breaker
     @param queued: (str) queue to set
