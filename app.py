@@ -50,7 +50,7 @@ async def init():
   for router in routers:
     raven.add_routes(router)
 
-  raven.add_routes([web.static('/dashboard', './client/dist')]) if is_prod else None
+  is_prod and raven.add_routes([web.static('/dashboard', './client/dist')])
   app.add_subapp('/raven', raven)
   #cors
   cors = aiohttp_cors.setup(app, defaults={
