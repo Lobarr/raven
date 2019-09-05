@@ -1,14 +1,27 @@
 import bcrypt
+from .bytes import Bytes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 
 class Hasher:
   @staticmethod
-  def hash(password: str) -> str:
+  def hash_sha_256(ctx: str):
     """
-    hashes password
+    hashes ctx usint sha256 algorithm
 
-    @returns jwt token
+    @returns hash
     """
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
+    digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+    digest.update(Bytes.str_to_bytes(ctx))
+    return Bytes.encode_bytes(digest.finalize()).decode('utf-8')
+  
+  def hash(ctx: str) -> str:
+    """
+    hashes ctx
+
+    @returns hash
+    """
+    return bcrypt.hashpw(ctx.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
   
   @staticmethod
   def validate(ctx: str, hash: str) -> bool:
