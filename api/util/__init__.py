@@ -2,7 +2,7 @@ from .error import Error
 from .bson import Bson
 from .db import DB
 from .token import Token
-from .password import Password
+from .hasher import Hasher
 from .validate import Validate
 from .bytes import Bytes
 from .crypt import Crypt

@@ -128,7 +128,7 @@ class RequestValidator:
 		res = password_policy.test(password)
 		if res != []:
 			raise Exception({
-				'message': 'Password provided does not match policy configured',
+				'message': 'Hasher provided does not match policy configured',
 				'status_code': 400
 			})
 	
@@ -143,6 +143,6 @@ class RequestValidator:
 		stats = PasswordStats(password)
 		if stats.strength() < strength_percentage:
 			raise Exception({
-				'message': 'Password strength not up to standard',
+				'message': 'Hasher strength not up to standard',
 				'status_code': 400
 			})

@@ -1,7 +1,6 @@
 import bcrypt
-from password_strength.policy import PasswordPolicy, PasswordStats
 
-class Password:
+class Hasher:
   @staticmethod
   def hash(password: str) -> str:
     """
@@ -12,10 +11,10 @@ class Password:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
   
   @staticmethod
-  def validate(password: str, hash: str) -> bool:
+  def validate(ctx: str, hash: str) -> bool:
     """
-    validates a password against a hash
+    validates a ctx against a hash
   
     @returns: match
     """
-    return bcrypt.checkpw(password.encode('utf-8'), hash.encode('utf-8'))
+    return bcrypt.checkpw(ctx.encode('utf-8'), hash.encode('utf-8'))

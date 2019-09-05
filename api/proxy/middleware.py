@@ -9,7 +9,7 @@ from multidict import CIMultiDict
 from time import time
 from aiohttp import web
 
-from api.util import DB, Api, Async, Bson, Error, Bytes, Regex, Password
+from api.util import DB, Api, Async, Bson, Error, Bytes, Regex, Hasher
 from api.util.tasks import handle_task_async, handle_task_sync
 from api.admin import Admin
 from api.service import Service, ServiceState, controller as service_controller
@@ -60,9 +60,60 @@ async def handle_circuit_breaker(breaker: object, service: object, request: web.
     CircuitBreaker.incr_count(str(breaker['_id']), DB.get_redis(request))
   ])
 
+async def handle_service(service: object, remote: str): 
+  if pydash.is_empty(service):
+    raise Exception({
+      'message': 'Not found',
+      'status_code': 404
+    })
+  if service['state'] in [ServiceState.DOWN.name, ServiceState.OFF.name]:
+    raise Exception({
+      'message': f"Service is currently {service['state']}",
+      'status_code': 503
+    })
+  if not pydash.is_empty(service['whitelisted_hosts']) and remote not in service['whitelisted_hosts'] or not pydash.is_empty(service['blacklisted_hosts']) and remote in service['blacklisted_hosts']:
+    raise Exception({
+      'message': 'Unauthorized',
+      'status_code': 401
+    })
+
+async def handle_request(request: web.Request, service: object, endpoint_cacher: object):
+  req_ctx = {
+    'method': request.method,
+    'url': service['targets'][service['cur_target_index']],
+    'params': dict(request.rel_url.query),
+    'data': await request.text(),
+    'cookies':  dict(request.cookies),
+    'headers': pydash.omit(dict(request.headers), 'Host'),
+  }
+  req = None
+  req_cache = None
+  req_ctx_hash = None
+  
+  if not pydash.is_empty(endpoint_cacher):
+    req_ctx_hash = Hasher.hash(json.dumps(req_ctx))
+    req_cache = await EndpointCacher.get_cache(req_ctx_hash, DB.get_redis(request))
+    logging.info(endpoint_cacher)
+    logging.info(req_cache)
+
+  if pydash.is_empty(req_cache):
+    req = await Api.call(**req_ctx)
+    if not pydash.is_empty(req_ctx_hash):
+      handle_task_async.s({
+        'func': 'EndpointCacher.set_cache',
+        'args': [req_ctx_hash, req, int(endpoint_cacher['timeout']), 'redis'],
+        'kwargs': {}
+      }).apply_async()
+      logging.info(req_ctx_hash)
+      logging.info(req)
+      logging.info(endpoint_cacher)
+  else:
+    logging.info(req_cache)
+    req = req_cache
+
 @web.middleware
 async def proxy(request: web.Request, handler: web.RequestHandler):
-  # try:
+  try:
     if pydash.starts_with(request.path_qs, '/raven'):
       return await handler(request)
 
@@ -72,57 +123,10 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     ])
     service = Regex.best_match(matched_services)
     breaker = Regex.best_match(matched_breakers)
-    endpoint_cacher = await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) if not pydash.is_empty(service) else None
+    endpoint_cacher = not pydash.is_empty(service) and await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) or None
 
-    if pydash.is_empty(matched_services):
-      raise Exception({
-        'message': 'Not found',
-        'status_code': 404
-      })
-    if service['state'] in [ServiceState.DOWN.name, ServiceState.OFF.name]:
-      raise Exception({
-        'message': f"Service is currently {service['state']}",
-        'status_code': 503
-      })
-    if not pydash.is_empty(service['whitelisted_hosts']) and request.remote not in service['whitelisted_hosts'] or not pydash.is_empty(service['blacklisted_hosts']) and request.remote in service['blacklisted_hosts']:
-      raise Exception({
-        'message': 'Unauthorized',
-        'status_code': 401
-      })
-
-    req_ctx = {
-      'method': request.method,
-      'url': service['targets'][service['cur_target_index']],
-      'params': dict(request.rel_url.query),
-      'data': await request.text(),
-      'cookies':  dict(request.cookies),
-      'headers': pydash.omit(dict(request.headers), 'Host'),
-    }
-
-    req = None
-    req_cache = None
-    req_ctx_hash = None
-    if not pydash.is_empty(endpoint_cacher):
-      req_ctx_hash = Password.hash(json.dumps(req_ctx))
-      req_cache = await EndpointCacher.get_cache(req_ctx_hash, DB.get_redis(request))
-      logging.info(endpoint_cacher)
-      logging.info(req_cache)
-
-    if pydash.is_empty(req_cache):
-      req = await Api.call(**req_ctx)
-      if not pydash.is_empty(req_ctx_hash):
-        # handle_task_async.s({
-        #   'func': 'EndpointCacher.set_cache',
-        #   'args': [req_ctx_hash, req, int(endpoint_cacher['timeout']), 'redis'],
-        #   'kwargs': {}
-        # }).apply_async()
-        logging.info(req_ctx_hash)
-        logging.info(req)
-        logging.info(endpoint_cacher)
-
-    else:
-      logging.info(req_cache)
-      # req = req_cache
+    await handle_service(service)
+    req = await handle_request(request, service, endpoint_cacher)
 
     checks = []
     if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
@@ -135,5 +139,5 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
       'kwargs': {}
     }).apply_async()
     return web.Response(body=Bytes.decode_bytes(req['body_bytes']), status=req['status'], content_type=req['content_type'], headers=CIMultiDict(pydash.omit(req['headers'], 'Content-Type', 'Transfer-Encoding', 'Content-Encoding')))
-  # except Exception as err:
-  #   return Error.handle(err)
+  except Exception as err:
+    return Error.handle(err)
