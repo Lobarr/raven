@@ -11,15 +11,12 @@ async def retrieve_rule(request: web.Request):
 	try:
 		# we want to identify the parameter which is used to identify the records
 		response = []
-		if 'path' in request.rel_url.query:
-				path = request.rel_url.query.get('path')
-				response = await RateLimiter.get_rule_by_path(path, DB.get_redis(request))
-		elif 'status_code' in request.rel_url.query:
+		if 'status_code' in request.rel_url.query:
 				status_code = request.rel_url.query.get('status_code')
 				response = await RateLimiter.get_rule_by_status_code(status_code, DB.get_redis(request))
-		elif 'host' in request.rel_url.query:
-			host = request.rel_url.query.get('host')
-			response = await RateLimiter.get_rule_by_host(host, DB.get_redis(request))
+		elif 'service_id' in request.rel_url.query:
+			service_id = request.rel_url.query.get('service_id')
+			response = await RateLimiter.get_rule_by_service_id(service_id, DB.get_redis(request))
 		elif 'id' in request.rel_url.query:
 			_id = request.rel_url.query.get('id')
 			Validate.object_id(_id)

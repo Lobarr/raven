@@ -211,7 +211,7 @@ class EndpointCacher:
     await db.expire(_hash, timeout)
 
   @staticmethod
-  async def get_cache(_hash: str, db: AioRedis):
+  async def get_cache(_hash: str, db: AioRedis) -> object:
     """
     gets cache
 

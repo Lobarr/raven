@@ -12,6 +12,8 @@ from api.admin import Admin
 from api.service import Service
 from api.circuit_breaker import CircuitBreaker
 from api.endpoint_cacher import EndpointCacher
+from api.insights import Insights
+from api.rate_limiter import RateLimiter
 
 tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
 
@@ -26,10 +28,13 @@ class TaskProvider(Task):
     'CircuitBreaker.incr_tripped_count': CircuitBreaker.incr_tripped_count,
     'CircuitBreaker.set_queued': CircuitBreaker.set_queued,
     'CircuitBreaker.update': CircuitBreaker.update,
-    'Event.handle_event': Event.handle_event,
     'EndpointCacher.set_cache': EndpointCacher.set_cache,
+    'Event.handle_event': Event.handle_event,
+    'Insights.create': Insights.create,
+    'RateLimiter.create_entry': RateLimiter.create_entry,
+    'RateLimiter.update_entry': RateLimiter.update_entry,
     'Service.advance_target': Service.advance_target,
-    'Service.update': Service.update,
+    'Service.update': Service.update
   }
 
   @property

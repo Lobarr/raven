@@ -5,20 +5,17 @@ rate_limit_rule_schema = {
 	'_id': {
 		'type': 'string',
 	},
-	'path': {
-		'type': 'string',
-	},
 	'max_requests': {
 		'type': 'integer',
 		'min': 0
 	},
+	'service_id': {
+    'type': 'string',
+    'check_with': Bson.validate_schema_id
+  },
 	'timeout': {
 		'type': 'integer',
 		'min': 0
-	},
-	'host': {
-		'type': 'string',
-		'regex': r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 	},
 	'message': {
 		'type': 'string',

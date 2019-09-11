@@ -99,58 +99,48 @@ class TestRateLimiterController:
       with patch.object(DB, 'get_redis') as get_mock:
         with patch.object(RateLimiter, 'get_all_rules') as get_all_rules_mock:
           with asynctest.patch.object(RateLimiter, 'get_rule_by_id') as get_rule_by_id_mock:
-            with patch.object(RateLimiter, 'get_rule_by_host') as get_rule_by_host_mock:
-              with patch.object(RateLimiter, 'get_rule_by_status_code') as get_rule_by_status_code_mock:
-                with patch.object(RateLimiter, 'get_rule_by_path') as get_rule_by_path_mock:
-                  with patch.object(Error, 'handle') as handle_mock:
-                    with patch.object(Bson, 'to_json') as to_json_mock:
-                      mock_req = MagicMock()
-                      mock_err = Exception()
-                      get_all_rules_mock.side_effect = mock_err
-                      await retrieve_rule(mock_req)
-                      handle_mock.assert_called_with(mock_err)
+            with patch.object(RateLimiter, 'get_rule_by_status_code') as get_rule_by_status_code_mock:
+              with patch.object(RateLimiter, 'get_rule_by_service_id') as get_rule_by_service_id_mock:
+                with patch.object(Error, 'handle') as handle_mock:
+                  with patch.object(Bson, 'to_json') as to_json_mock:
+                    mock_req = MagicMock()
+                    mock_err = Exception()
+                    get_all_rules_mock.side_effect = mock_err
+                    await retrieve_rule(mock_req)
+                    handle_mock.assert_called_with(mock_err)
 
-                      mock_req.rel_url.query = {}
-                      await retrieve_rule(mock_req)
-                      get_mock.assert_called_with(mock_req)
-                      get_all_rules_mock.assert_called()
-                      
-                      mock_query = {
-                        'id': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      get_rule_by_id_mock.return_value = {}
-                      await retrieve_rule(mock_req)
-                      get_rule_by_id_mock.assert_called()
-                      expect(get_rule_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))
-                      get_mock.assert_called()
+                    mock_req.rel_url.query = {}
+                    await retrieve_rule(mock_req)
+                    get_mock.assert_called_with(mock_req)
+                    get_all_rules_mock.assert_called()
+                    
+                    mock_query = {
+                      'id': 'some-value'
+                    }
+                    mock_req.rel_url.query = mock_query
+                    get_rule_by_id_mock.return_value = {}
+                    await retrieve_rule(mock_req)
+                    get_rule_by_id_mock.assert_called()
+                    expect(get_rule_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))
+                    get_mock.assert_called()
 
-                      mock_query = {
-                        'host': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await retrieve_rule(mock_req)
-                      get_rule_by_host_mock.assert_called()
-                      expect(get_rule_by_host_mock.call_args[0][0]).to(equal(mock_query['host']))
-                      get_mock.assert_called()
+                    mock_query = {
+                      'status_code': 'some-value'
+                    }
+                    mock_req.rel_url.query = mock_query
+                    await retrieve_rule(mock_req)
+                    get_rule_by_status_code_mock.assert_called()
+                    expect(get_rule_by_status_code_mock.call_args[0][0]).to(equal(mock_query['status_code']))
+                    get_mock.assert_called()
 
-                      mock_query = {
-                        'status_code': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await retrieve_rule(mock_req)
-                      get_rule_by_status_code_mock.assert_called()
-                      expect(get_rule_by_status_code_mock.call_args[0][0]).to(equal(mock_query['status_code']))
-                      get_mock.assert_called()
-
-                      mock_query = {
-                        'path': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await retrieve_rule(mock_req)
-                      get_rule_by_path_mock.assert_called()
-                      expect(get_rule_by_path_mock.call_args[0][0]).to(equal(mock_query['path']))
-                      get_mock.assert_called()
+                    mock_query = {
+                      'service_id': 'some-value'
+                    }
+                    mock_req.rel_url.query = mock_query
+                    await retrieve_rule(mock_req)
+                    get_rule_by_service_id_mock.assert_called()
+                    expect(get_rule_by_service_id_mock.call_args[0][0]).to(equal(mock_query['service_id']))
+                    get_mock.assert_called()
 
 
   @pytest.mark.asyncio

@@ -7,9 +7,8 @@ from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_vali
 from api.util import Bson, DB, Async
 
 rules_set = 'rules_set'
-rule_path_index = 'rule_path_index'
-rule_host_index = 'rule_host_index'
 rule_status_code_index = 'rule_status_code_index'
+rule_service_id_index = 'rule_service_id_index'
 entry_set = 'entries_set'
 entry_rule_id_index = 'entry_rule_id_index'
 entry_host_index = 'entry_host_index'
@@ -24,7 +23,7 @@ class RateLimiter:
     @param db: redis instance
     """
     coroutines = []
-    for index in [('path', rule_path_index), ('host', rule_host_index), ('status_code', rule_status_code_index)]:
+    for index in [('status_code', rule_status_code_index), ('service_id', rule_service_id_index)]:
       if index[0] in ctx:
         coroutines.append(db.hset(index[1], ctx['_id'], ctx[index[0]]))
     for index in [('rule_id', entry_rule_id_index), ('host', entry_host_index)]:
@@ -41,7 +40,7 @@ class RateLimiter:
     @param db: redis instance
     """
     coroutines = []
-    for index in [rule_path_index, rule_host_index, rule_status_code_index, entry_rule_id_index, entry_host_index]:
+    for index in [rule_status_code_index, rule_service_id_index, entry_rule_id_index, entry_host_index]:
       coroutines.append(db.hdel(index, _id))
     await Async.all(coroutines)
   
@@ -132,30 +131,14 @@ class RateLimiter:
     return await Async.all(coroutines)
   
   @staticmethod
-  async def get_rule_by_path(path, db) -> list:
+  async def get_rule_by_service_id(service_id: str, db: AioRedis):
     """
-    Gets a rate limiter rule by the path of the rule
+    gets rules by service id
 
-    @param path: (string) path of the rate limiter rule
-    @param db: (object) db connection
-    @return: the records with the given path
-    """
-    keys = await RateLimiter._search_indexes(rule_path_index, path, db)
-    coroutines = []
-    for key in keys:
-      coroutines.append(db.hgetall(key, encoding='utf-8'))
-    return await Async.all(coroutines)
-
-
-  @staticmethod
-  async def get_rule_by_host(host: str, db: AioRedis) -> list:
-    """
-    gets rules by host
-
-    @param host: (str) host to get
+    @param service_id (str) service id to get rules by
     @param db: db connection
     """
-    keys = await RateLimiter._search_indexes(rule_host_index, host, db)
+    keys = await RateLimiter._search_indexes(rule_service_id_index, service_id, db)
     coroutines = []
     for key in keys:
       coroutines.append(db.hgetall(key, encoding='utf-8'))
@@ -175,7 +158,7 @@ class RateLimiter:
     return await Async.all(coroutines)
           
   @staticmethod
-  async def create_entry(ctx, db):
+  async def create_entry(ctx, db: AioRedis):
     """
     Creates a rate limiter entry.
 
@@ -191,7 +174,7 @@ class RateLimiter:
     )
           
   @staticmethod
-  async def update_entry(_id, ctx, db):
+  async def update_entry(_id: str, ctx: object, db: AioRedis):
     """
     Updates a rate limiter entry.
 
@@ -204,7 +187,7 @@ class RateLimiter:
     )
 
   @staticmethod
-  async def delete_entry(_id, db):
+  async def delete_entry(_id: str, db: AioRedis):
     """
     Deletes a rate limiter entry.
 
@@ -218,7 +201,7 @@ class RateLimiter:
     )
 
   @staticmethod
-  async def get_all_entries(db):
+  async def get_all_entries(db: AioRedis):
     """
     Gets all rate limiter entries
     
@@ -280,7 +263,7 @@ class RateLimiter:
     await db.hincrby(_id, 'count', 1)
       
   @staticmethod
-  async def decrement_entry_count(_id, db):
+  async def decrement_entry_count(_id: str, db: AioRedis):
     """
     decrements entry count
   
