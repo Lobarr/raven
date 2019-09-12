@@ -32,6 +32,7 @@ class TaskProvider(Task):
     'Event.handle_event': Event.handle_event,
     'Insights.create': Insights.create,
     'RateLimiter.create_entry': RateLimiter.create_entry,
+    'RateLimiter.increment_entry_count': RateLimiter.increment_entry_count,
     'RateLimiter.update_entry': RateLimiter.update_entry,
     'Service.advance_target': Service.advance_target,
     'Service.update': Service.update

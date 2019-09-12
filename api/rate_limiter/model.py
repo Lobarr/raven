@@ -1,6 +1,8 @@
 import bson
 import pydash
 import asyncio
+import logging
+from datetime import datetime, timedelta
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator
@@ -172,6 +174,7 @@ class RateLimiter:
       db.sadd(entry_set, ctx['_id']),
       db.expire(ctx['_id'], int(ctx['timeout']))
     )
+    #find way to remove entry from entry set after expiry
           
   @staticmethod
   async def update_entry(_id: str, ctx: object, db: AioRedis):
@@ -212,7 +215,8 @@ class RateLimiter:
     coroutines = []
     for key in entries_keys:
       coroutines.append(db.hgetall(key, encoding='utf-8'))
-    return await Async.all(coroutines)
+    entries = await Async.all(coroutines)
+    return list(filter(lambda entry: entry, entries))
 
   @staticmethod
   async def get_entry_by_id(_id: str, db: AioRedis):
@@ -236,7 +240,8 @@ class RateLimiter:
     coroutines = []
     for key in entries_keys:
       coroutines.append(db.hgetall(key, encoding='utf-8'))
-    return await Async.all(coroutines)
+    entries = await Async.all(coroutines)
+    return list(filter(lambda entry: entry, entries))
 
   @staticmethod
   async def get_entry_by_host(host: str, db: AioRedis):
@@ -250,7 +255,8 @@ class RateLimiter:
     coroutines = []
     for key in entries_keys:
       coroutines.append(db.hgetall(key, encoding='utf-8'))
-    return await Async.all(coroutines)
+    entries = await Async.all(coroutines)
+    return list(filter(lambda entry: entry, entries))
   
   @staticmethod
   async def increment_entry_count(_id: str, db: AioRedis):

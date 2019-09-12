@@ -135,12 +135,8 @@ async def handle_insights(request: web.Request, response: object, service_id: st
 
 async def handle_rate_limiter(request: web.Request, service_id: str, rule: object):
   if not pydash.is_empty(rule):
-    logging.info("found rule")
-    logging.info(rule)
     entries = await RateLimiter.get_entry_by_rule_id(rule['_id'], DB.get_redis(request))
     if not pydash.is_empty(entries):
-      logging.info(entries)
-      logging.info("found entries")
       entry = entries[0]
       if int(entry['count']) >= int(rule['max_requests']):
         raise Exception({
@@ -148,12 +144,11 @@ async def handle_rate_limiter(request: web.Request, service_id: str, rule: objec
           'status_code': int(rule['status_code']) or 429
         })
       handle_task_async.s({
-        'fund': 'RateLimiter.update_entry',
-        'args': [entry['_id'], { 'count': entry['count'] + 1}, 'redis'], 
+        'func': 'RateLimiter.increment_entry_count',
+        'args': [entry['_id'], 'redis'], 
         'kwargs': {}
       }).apply_async()
     else:
-      logging.info("creating entry")
       entry = {
         'rule_id': rule['_id'],
         'host': request.remote,
@@ -168,7 +163,7 @@ async def handle_rate_limiter(request: web.Request, service_id: str, rule: objec
 
 @web.middleware
 async def proxy(request: web.Request, handler: web.RequestHandler):
-  # try:
+  try:
     req_start_time = time()
     if pydash.starts_with(request.path_qs, '/raven'):
       return await handler(request)
@@ -178,7 +173,7 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     ])
     service = Regex.best_match(prereq[0])
     rate_limiter_rules = await RateLimiter.get_rule_by_service_id(str(service['_id']), DB.get_redis(request))
-    rate_limiter_rule = rate_limiter_rules[0]
+    rate_limiter_rule = rate_limiter_rules[0] if rate_limiter_rules else None
     await handle_service(service, request.remote)
     await handle_rate_limiter(request, str(service['_id']), rate_limiter_rule)
     breakers = await CircuitBreaker.get_by_service_id(str(service['_id']), DB.get(request, circuit_breaker_controller.table))
@@ -202,9 +197,8 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     req_finish_time = time()
     req_elapsed_time = req_finish_time - req_start_time
     checks.append(handle_insights(request, req, str(service['_id']), req_elapsed_time, req_cache_hit))
-    # checks.append(handle_rate_limiter(request, str(service['_id']), rate_limiter_rule))
     await Async.all(checks)
 
     return web.Response(body=Bytes.decode_bytes(req['body_bytes']), status=req['status'], content_type=req['content_type'], headers=CIMultiDict(pydash.omit(req['headers'], 'Content-Type', 'Transfer-Encoding', 'Content-Encoding')))
-  # except Exception as err:
-  #   return Error.handle(err)
+  except Exception as err:
+    return Error.handle(err)
