@@ -277,3 +277,18 @@ class RateLimiter:
     @param db: redis instance
     """
     await db.hincrby(_id, 'count', -1)
+
+  @staticmethod
+  async def clear_empty_entries(db: AioRedis):
+    empty_entries = []
+    entries_keys = await DB.fetch_members(entry_set, db)
+    for key in entries_keys:
+      entry = await db.hgetall(key, encoding='utf-8')
+      pydash.is_empty(entry) and empty_entries.append(key)
+    
+    coroutines = []
+    for empty_entry in empty_entries:
+      coroutines.append(db.srem(entry_set, empty_entry))
+      coroutines.append(RateLimiter._clear_indexes(empty_entry, db))
+
+    await Async.all(coroutines)
