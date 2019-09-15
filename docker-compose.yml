@@ -16,7 +16,7 @@ services:
       - backend
   celery:
     build: .
-    command: nodemon -L --watch api/util/tasks.py --exec "make start-celery" 
+    command: bash -c "make start-celery-beat & sleep 1 && make start-celery-watch"
     volumes:
       - .:/raven
     environment:
