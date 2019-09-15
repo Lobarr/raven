@@ -100,19 +100,6 @@ class TestRequestValidator:
     mock_db.find.assert_called()
     mock_db.find.assert_called_with({'method': mock_method})
     mock_cursor.to_list.assert_called()
-
-  @pytest.mark.asyncio
-  async def test_get_by_endpoint(self, *args):
-    mock_endpoint = 'some-value'
-    mock_db = CoroutineMock()
-    mock_cursor = MagicMock()
-    mock_cursor.to_list = CoroutineMock()
-    mock_db.find = MagicMock()
-    mock_db.find.return_value = mock_cursor
-    await RequestValidator.get_by_endpoint(mock_endpoint, mock_db)
-    mock_db.find.assert_called()
-    mock_db.find.assert_called_with({'endpoint': mock_endpoint})
-    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_validate_schema(self, *args):
