@@ -4,6 +4,7 @@ import aioredis
 import pydash
 import logging
 from celery import Celery, Task
+from celery.schedules import crontab
 from motor.motor_asyncio import AsyncIOMotorClient
 from api.util.env import REDIS, DB
 from api.event import Event
@@ -16,6 +17,18 @@ from api.insights import Insights
 from api.rate_limiter import RateLimiter
 
 tasks = Celery('api.util.tasks', broker=REDIS, backend=REDIS)
+
+tasks.conf.beat_schedule = {
+  'raven.api.rate_limiter.clear_empty_entries': {
+    'task': 'raven.api.task.async',
+    'schedule': crontab(), 
+    'args': [{
+      'func': 'RateLimiter.clear_empty_entries',
+      'args': ['redis'],
+      'kwargs': {}
+    }]
+  }
+}
 
 class TaskProvider(Task):
   _mongo = None
@@ -31,6 +44,7 @@ class TaskProvider(Task):
     'EndpointCacher.set_cache': EndpointCacher.set_cache,
     'Event.handle_event': Event.handle_event,
     'Insights.create': Insights.create,
+    'RateLimiter.clear_empty_entries': RateLimiter.clear_empty_entries,
     'RateLimiter.create_entry': RateLimiter.create_entry,
     'RateLimiter.increment_entry_count': RateLimiter.increment_entry_count,
     'RateLimiter.update_entry': RateLimiter.update_entry,
