@@ -18,6 +18,7 @@ from api.event import Event, controller as event_controller
 from api.endpoint_cacher import EndpointCacher
 from api.insights import controller as insights_controller
 from api.rate_limiter import RateLimiter
+from api.request_validator import RequestValidator, controller as request_validator_controller
 
 async def handle_circuit_breaker(breaker: object, service: object, request: web.Request, req: object):
   if req['status'] in breaker['status_codes']:
@@ -125,7 +126,8 @@ async def handle_insights(request: web.Request, response: object, service_id: st
     'scheme': request.scheme,
     'status_code': response['status'],
     'content_type': response['content_type'],
-    'elapsed_time': elapsed_time
+    'elapsed_time': elapsed_time,
+    'cache': cache
   }
   handle_task_async.s({
     'func': 'Insights.create',
@@ -161,6 +163,13 @@ async def handle_rate_limiter(request: web.Request, service_id: str, rule: objec
         'kwargs': {}
       }).apply_async()
 
+async def handle_request_validator(validator: object, ctx: str, method: str):
+  if method == validator['method']:
+    'schema' in validator and await RequestValidator.validate_schema(ctx, validator['schema'])
+    if 'password_field' in validator and 'password_policy' in validator and validator['password_field'] in ctx:
+        await RequestValidator.enforce_policy(ctx[validator['password_field']], validator['password_policy'])
+        'strength' in validator['password_policy'] and await RequestValidator.enforce_strength(ctx[validator['password_field']], validator['password_policy']['strength'])
+
 @web.middleware
 async def proxy(request: web.Request, handler: web.RequestHandler):
   try:
@@ -168,18 +177,18 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
     if pydash.starts_with(request.path_qs, '/raven'):
       return await handler(request)
 
-    prereq = await Async.all([
-      Regex.get_matched_paths(request.path, DB.get(request, service_controller.table))
-    ])
-    service = Regex.best_match(prereq[0])
+    service = Regex.best_match(await Regex.get_matched_paths(request.path, DB.get(request, service_controller.table)))
+    await handle_service(service, request.remote)
     rate_limiter_rules = await RateLimiter.get_rule_by_service_id(str(service['_id']), DB.get_redis(request))
     rate_limiter_rule = rate_limiter_rules[0] if rate_limiter_rules else None
-    await handle_service(service, request.remote)
     await handle_rate_limiter(request, str(service['_id']), rate_limiter_rule)
     breakers = await CircuitBreaker.get_by_service_id(str(service['_id']), DB.get(request, circuit_breaker_controller.table))
     breaker = breakers[0] if breakers else None
+    request_validators = await RequestValidator.get_by_service_id(str(service['_id']), DB.get(request, request_validator_controller.table))
+    request_validator = request_validators[0] if request_validators else None
     endpoint_cachers = not pydash.is_empty(service) and await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) or None
     endpoint_cacher = endpoint_cachers[0] if endpoint_cachers else None
+    await handle_request_validator(request_validator, json.loads(await request.text()), request.method)
     req, req_cache_hit = await handle_request(request, service, endpoint_cacher)
     checks = []
 
