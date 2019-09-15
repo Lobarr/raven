@@ -1,5 +1,6 @@
 import asyncio
 import bson
+import logging
 from api.service import Service
 from api.util import DB
 from motor.motor_asyncio import AsyncIOMotorCollection
@@ -16,9 +17,18 @@ class RequestValidator:
 		@param document: (object) document to be inserted
 		@param db: (object) db connection
 		"""
-		if 'service_id' in ctx:
-			await Service.check_exists(ctx['service_id'], service_db)
-		await request_validator_db.insert_one(ctx)
+		try:
+			if 'schema' in ctx:
+				Validator(ctx['schema'])
+			if 'service_id' in ctx:
+				await Service.check_exists(ctx['service_id'], service_db)
+			await request_validator_db.insert_one(ctx)
+		except Exception as err:
+			raise Exception({
+				'message': 'error in provided schema',
+				'context': err.args[0],
+				'status_code': 400
+			})
 
 	@staticmethod
 	async def update(request_validator_id: str, ctx: object, db: AsyncIOMotorCollection):
@@ -83,18 +93,6 @@ class RequestValidator:
 		return await res.to_list(100)
 	
 	@staticmethod
-	async def get_by_endpoint(endpoint: str, db: AsyncIOMotorCollection):
-		"""
-		Gets a request validation entry by the path provided
-
-		@param path: (string) path of the request
-		@param db: (object) db connection
-		@return: the documents with the provided path
-		"""
-		res = db.find({"endpoint": endpoint})
-		return await res.to_list(100)
-
-	@staticmethod
 	async def validate_schema(ctx: object, schema: object):
 		"""
 		Validates that the request body provided matches the schema for the request.
@@ -117,32 +115,38 @@ class RequestValidator:
 		@param password: (string) password to be validated
 		@param policy: (object) password requirements
 		"""
-		password_policy = PasswordPolicy.from_names(
-			length=policy['length'],
-			uppercase=policy['upper_case_count'],
-			numbers=policy['numbers_count'],
-			special=policy['specials_count'],
-			nonletters=policy['non_letters_count'],
-		)
+		ctx = {}
+		kwargs_mapping = {
+			'length': 'length',
+			'upper_case_count': 'uppercase',
+			'numbers_count': 'numbers', 
+			'specials_count': 'special',
+			'non_letters_count': 'nonletters',
+		}
 		
+		for key in kwargs_mapping.keys():
+			if key in policy:
+				ctx[kwargs_mapping[key]] = policy[key]
+
+		password_policy = PasswordPolicy.from_names(**ctx)
 		res = password_policy.test(password)
 		if res != []:
 			raise Exception({
-				'message': 'Hasher provided does not match policy configured',
+				'message': 'Password provided does not match policy configured',
 				'status_code': 400
 			})
 	
 	@staticmethod
 	async def enforce_strength(password: str, strength_percentage: float):
 		"""
-		enforces passwrd to have specified strength percentage
+		enforces password to have specified strength percentage
 	
-		@param password: (str) to enforce strenght
-		@param strength: (float) cutoff strenght percentage
+		@param password: (str) to enforce strength
+		@param strength: (float) cut off strength percentage
 		"""
 		stats = PasswordStats(password)
 		if stats.strength() < strength_percentage:
 			raise Exception({
-				'message': 'Hasher strength not up to standard',
+				'message': 'Password strength not up to standard',
 				'status_code': 400
 			})
