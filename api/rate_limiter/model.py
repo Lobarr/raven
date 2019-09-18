@@ -1,8 +1,6 @@
 import bson
 import pydash
 import asyncio
-import logging
-from datetime import datetime, timedelta
 from aioredis import Redis as AioRedis
 from cerberus import Validator
 from api.rate_limiter.schema import rate_limit_rule_schema, rate_limit_rule_validator, rate_limit_entry_schema, rate_limit_entry_validator

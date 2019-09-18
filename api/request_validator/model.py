@@ -1,6 +1,4 @@
-import asyncio
 import bson
-import logging
 from api.service import Service
 from api.util import DB
 from motor.motor_asyncio import AsyncIOMotorCollection

@@ -1,5 +1,4 @@
 import jwt
-import json
 from api.util.env import JWT_SECRET
 
 JWT_ALGORITHM = 'HS256'

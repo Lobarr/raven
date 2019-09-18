@@ -1,5 +1,4 @@
 import bson
-import logging
 from motor.motor_asyncio import AsyncIOMotorCollection
 from api.insights.schema import insights_schema, insights_validator
 from api.service import Service
