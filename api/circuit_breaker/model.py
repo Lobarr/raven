@@ -1,6 +1,5 @@
 import bson
 import pydash
-import re
 from enum import Enum
 from aioredis import Redis as AioRedis
 from motor.motor_asyncio import AsyncIOMotorCollection

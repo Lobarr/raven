@@ -1,6 +1,5 @@
 import bson
 import pydash
-import logging
 import asyncio
 import json
 from aioredis import Redis as AioRedis

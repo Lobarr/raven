@@ -1,9 +1,6 @@
 import bson
 import aiohttp
-import asyncio
-import json
 import requests
-from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from api.util import Bytes, Async
 

@@ -1,5 +1,4 @@
 import bson
-from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.admin.schema import admin_schema, admin_validator

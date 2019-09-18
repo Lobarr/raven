@@ -1,5 +1,4 @@
 import pydash
-import json
 from aiohttp import web
 
 class Error:

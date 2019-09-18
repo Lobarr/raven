@@ -2,7 +2,6 @@
 import asyncio
 import aioredis
 import pydash
-import logging
 from celery import Celery, Task
 from celery.schedules import crontab
 from motor.motor_asyncio import AsyncIOMotorClient
