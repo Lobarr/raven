@@ -224,7 +224,8 @@ class TestService:
       try:
         mock_id = 'some-value'
         mock_db = MagicMock()
+        get_mock.return_value = None
         await Service.check_exists(mock_id, mock_db)
-        get_mock.assert_called()
       except Exception as err:
+        get_mock.assert_called()
         expect(err.args[0]).to(have_keys('message', 'status_code'))

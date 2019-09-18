@@ -2,7 +2,7 @@ import mock
 from mock import patch, MagicMock
 from expects import expect, equal, be_a
 
-from api.util import Hasher
+from api.util import Hasher, Bytes
 
 class TestPassword:
   @patch('bcrypt.gensalt')
@@ -21,3 +21,4 @@ class TestPassword:
     args[0].assert_called()
     mock_hash.encode.assert_called()
     mock_password.encode.assert_called()
+

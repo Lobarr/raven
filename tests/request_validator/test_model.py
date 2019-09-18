@@ -6,7 +6,7 @@ from cerberus import Validator
 from password_strength import PasswordPolicy, PasswordStats
 from mock import patch, MagicMock
 from asynctest import CoroutineMock
-from expects import expect, equal, raise_error, be_an, have_keys
+from expects import expect, equal, raise_error, be_an, have_keys, raise_error, be_a, have_keys
 from api.service import Service
 from api.request_validator import RequestValidator, request_validator
 from api.util import Validate, Crypt
@@ -14,18 +14,29 @@ from api.util import Validate, Crypt
 class TestRequestValidator:
   @pytest.mark.asyncio
   async def test_create(self, *args):
+    # with patch('cerberus.Validator') as validator_mock:
     with asynctest.patch.object(Service, 'check_exists') as check_exists_mock:
-      mock_ctx = {}
+      mock_ctx = {
+        'schema': {},
+        'service_id': 'some-value'
+      }
       mock_db = MagicMock()
       mock_db.insert_one = CoroutineMock()
       await RequestValidator.create(mock_ctx, mock_db, mock_db)
       mock_db.insert_one.assert_awaited_with(mock_ctx)
+      check_exists_mock.assert_called()
 
       mock_ctx = {
-        'service_id': 'some-value'
+        'schema': {
+          'type': 'some-value'
+        }
       }
-      await RequestValidator.create(mock_ctx, mock_db, mock_db)
-      check_exists_mock.assert_called()
+      try:
+        await RequestValidator.create(mock_ctx, mock_db, mock_db)
+        expect(True).to(equal(False))
+      except Exception as err:
+        expect(err.args[0]).to(be_a(object))
+        expect(err.args[0]).to(have_keys('message', 'context', 'status_code'))
 
   @pytest.mark.asyncio
   async def test_update(self, *args):
@@ -153,3 +164,12 @@ class TestRequestValidator:
       mock_password = 'some-value'
       mock_strength_percentage = 0.90
       await RequestValidator.enforce_strength(mock_password, mock_strength_percentage)
+      password_stats_mock.assert_called()
+
+      try:
+        password_stats_mock.return_value = 0.00
+        await RequestValidator.enforce_strength(mock_password, mock_strength_percentage)
+        expect(True).to(equal(False))
+      except Exception as err:
+        expect(err.args[0]).to(be_an(object))
+        expect(err.args[0]).to(have_keys('message', 'status_code'))

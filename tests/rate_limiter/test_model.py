@@ -156,6 +156,31 @@ class TestRateLimiter:
       expect(rules).to(contain(mock_rule))
 
   @pytest.mark.asyncio
+  @asynctest.patch.object(Async, 'all')
+  async def test_get_rule_by_service_id(self, *args):
+    with asynctest.patch.object(RateLimiter, '_search_indexes') as _search_indexes_mock:
+      mock_service_id = 'some-id'
+      mock_rule = {
+        'path': 'some-path',
+        'max_requests': 1,
+        'timeout': 1,
+        'host': 'some-host',
+        'message': 'some-message'
+      }
+      mock_keys = ['some-value']
+      mock_db = MagicMock()
+      mock_hgetall = CoroutineMock()
+      mock_db.hgetall = mock_hgetall
+      _search_indexes_mock.return_value = mock_keys
+      mock_hgetall.return_value = mock_rule
+      args[0].return_value = [mock_rule]
+      rules = await RateLimiter.get_rule_by_service_id(mock_service_id, mock_db)
+      args[0].assert_awaited()
+      _search_indexes_mock.assert_awaited()
+      expect(mock_hgetall.call_args[0][0]).to(equal(mock_keys[0]))
+      expect(rules).to(contain(mock_rule))
+
+  @pytest.mark.asyncio
   async def test_get_all_rules(self, *args):
     with asynctest.patch.object(DB, 'fetch_members') as fetch_members_mock:
       mock_rule = {
@@ -327,3 +352,20 @@ class TestRateLimiter:
     mock_db.hincrby = mock_hincrby
     await RateLimiter.decrement_entry_count(mock_id, mock_db)
     mock_hincrby.assert_awaited_with(mock_id, 'count', -1)
+
+  @pytest.mark.asyncio
+  @asynctest.patch.object(DB, 'fetch_members')
+  async def test_clear_empty_entries(self, *args):
+    with asynctest.patch.object(RateLimiter, '_clear_indexes') as _clear_indexes_mock:
+      expected_entries_keys = ['some-value']
+      args[0].return_value = expected_entries_keys
+      mock_db = MagicMock()
+      mock_db.hgetall = CoroutineMock()
+      mock_db.hgetall.return_value = {}
+      mock_db.srem = CoroutineMock()
+      await RateLimiter.clear_empty_entries(mock_db)
+      args[0].assert_awaited()
+      mock_db.hgetall.assert_awaited()
+      mock_db.srem.assert_awaited()
+      _clear_indexes_mock.assert_awaited()
+      expect(mock_db.srem.await_args[0][1]).to(equal(expected_entries_keys[0]))

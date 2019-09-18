@@ -7,7 +7,7 @@ class Hasher:
   @staticmethod
   def hash_sha_256(ctx: str):
     """
-    hashes ctx usint sha256 algorithm
+    hashes string using sha256 algorithm
 
     @returns hash
     """

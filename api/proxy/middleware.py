@@ -10,7 +10,7 @@ from time import time
 from aiohttp import web
 
 from api.util import DB, Api, Async, Bson, Error, Bytes, Regex, Hasher
-from api.util.tasks import handle_task_async, handle_task_sync
+from api.util.tasks import handle_task_async
 from api.admin import Admin
 from api.service import Service, ServiceState, controller as service_controller
 from api.circuit_breaker import CircuitBreaker, CircuitBreakerStatus, controller as circuit_breaker_controller
