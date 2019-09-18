@@ -1,6 +1,7 @@
 import bson
 import json
 import requests
+import logging
 from cerberus import Validator
 from motor.motor_asyncio import AsyncIOMotorCollection
 from aiohttp.client import ClientSession

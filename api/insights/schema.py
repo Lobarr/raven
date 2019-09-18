@@ -27,11 +27,14 @@ insights_schema = {
   'status_code': {
     'type': 'integer'
   },
-  'content_types': {
+  'content_type': {
     'type': 'list'
   },
   'elapsed_time': {
     'type': 'integer'
+  },
+  'cache': {
+    'type': 'boolean'
   }
 }
 

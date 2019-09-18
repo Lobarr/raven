@@ -3,7 +3,7 @@ from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.admin.schema import admin_schema, admin_validator
-from api.util import Password
+from api.util import Hasher
 from api.util.env import RAVEN_ADMIN_PASS, RAVEN_ADMIN_USER
 
 collection_name = 'admin'
@@ -17,7 +17,7 @@ class Admin:
     @param ctx: (object) context of admin
     @param db: mongo instance
     """
-    ctx['password'] = Password.hash(ctx['password'])
+    ctx['password'] = Hasher.hash(ctx['password'])
     await db.insert_one(ctx)
 
   @staticmethod
@@ -29,7 +29,7 @@ class Admin:
     @param ctx: (object) 
     """
     if 'password' in ctx:
-      ctx['password'] = Password.hash(ctx['password'])
+      ctx['password'] = Hasher.hash(ctx['password'])
     await db.update_one({'_id': bson.ObjectId(_id)}, {'$set': ctx})
 
   @staticmethod
@@ -77,7 +77,7 @@ class Admin:
     @param db: mongo instance
     """
     admin = await Admin.get_by_username(username, db)
-    match = Password.validate(password, admin['password'])
+    match = Hasher.validate(password, admin['password'])
     return match 
 
   @staticmethod

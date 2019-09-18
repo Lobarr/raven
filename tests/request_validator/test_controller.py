@@ -1,5 +1,6 @@
 import pytest
 import mock
+import asynctest
 from aiohttp import web
 from asynctest import CoroutineMock
 from expects import expect, equal, have_keys
@@ -99,50 +100,42 @@ class TestRequstValidatorController:
     with patch.object(Validate, 'object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(RequestValidator, 'get_all') as get_all_mock:
-          with patch.object(RequestValidator, 'get_by_id') as get_by_id_mock:
+          with asynctest.patch.object(RequestValidator, 'get_by_id') as get_by_id_mock:
             with patch.object(RequestValidator, 'get_by_service_id') as get_by_service_id_mock:
               with patch.object(RequestValidator, 'get_by_method') as get_by_method_mock:
-                with patch.object(RequestValidator, 'get_by_endpoint') as get_by_endpoint_mock:
-                  with patch.object(Error, 'handle') as handle_mock:
-                    with patch.object(Bson, 'to_json') as to_json_mock:
-                      mock_req = MagicMock()
-                      mock_req.rel_url.query = {}
-                      await get_handler(mock_req)
-                      get_mock.assert_called_with(mock_req, table)
-                      get_all_mock.assert_called()
+                with patch.object(Error, 'handle') as handle_mock:
+                  with patch.object(Bson, 'to_json') as to_json_mock:
+                    mock_req = MagicMock()
+                    mock_req.rel_url.query = {}
+                    await get_handler(mock_req)
+                    get_mock.assert_called_with(mock_req, table)
+                    get_all_mock.assert_called()
 
-                      mock_query = {
-                        'id': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await get_handler(mock_req)
-                      get_by_id_mock.assert_called()
-                      expect(get_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))
-                      get_mock.assert_called()
+                    mock_query = {
+                      'id': 'some-value'
+                    }
+                    get_by_id_mock.return_value = {}
+                    mock_req.rel_url.query = mock_query
+                    await get_handler(mock_req)
+                    get_by_id_mock.assert_called()
+                    expect(get_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))
+                    get_mock.assert_called()
 
-                      mock_query = {
-                        'service_id': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await get_handler(mock_req)
-                      get_by_service_id_mock.assert_called()
-                      expect(get_by_service_id_mock.call_args[0][0]).to(equal(mock_query['service_id']))
-                      get_mock.assert_called()
+                    mock_query = {
+                      'service_id': 'some-value'
+                    }
+                    mock_req.rel_url.query = mock_query
+                    await get_handler(mock_req)
+                    get_by_service_id_mock.assert_called()
+                    expect(get_by_service_id_mock.call_args[0][0]).to(equal(mock_query['service_id']))
+                    get_mock.assert_called()
 
-                      mock_query = {
-                        'method': 'some-value'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await get_handler(mock_req)
-                      get_by_method_mock.assert_called()
-                      expect(get_by_method_mock.call_args[0][0]).to(equal(mock_query['method']))
-                      get_mock.assert_called()
+                    mock_query = {
+                      'method': 'some-value'
+                    }
+                    mock_req.rel_url.query = mock_query
+                    await get_handler(mock_req)
+                    get_by_method_mock.assert_called()
+                    expect(get_by_method_mock.call_args[0][0]).to(equal(mock_query['method']))
+                    get_mock.assert_called()
 
-                      mock_query = {
-                        'endpoint': 'some-valuw'
-                      }
-                      mock_req.rel_url.query = mock_query
-                      await get_handler(mock_req)
-                      get_by_endpoint_mock.assert_called()
-                      expect(get_by_endpoint_mock.call_args[0][0]).to(equal(mock_query['endpoint']))
-                      get_mock.assert_called()

@@ -1,8 +1,16 @@
+import re
 import bson
+import pydash
+from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorCollection
 from .schema import service_schema, service_validator
 
 collection_name = 'service'
+
+class ServiceState(Enum):
+  DOWN = 'DOWN'
+  UP = 'UP'
+  OFF = 'OFF'
 
 class Service:
   @staticmethod
@@ -57,6 +65,17 @@ class Service:
     @param db: mongo collection instance
     """
     res = db.find({'secure': secure})
+    return await res.to_list(100)
+
+  @staticmethod
+  async def get_by_path(path: str, db: AsyncIOMotorCollection) -> list:
+    """
+    gets service by path
+
+    @param path: (str) path of service
+    @param db: mongo connection
+    """
+    res = db.find({'path': path})
     return await res.to_list(100)
   
   @staticmethod
@@ -179,3 +198,4 @@ class Service:
         'message': 'Service id provided does not exist',
         'status_code': 400
       })
+  

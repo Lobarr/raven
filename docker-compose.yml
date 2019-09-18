@@ -16,11 +16,12 @@ services:
       - backend
   celery:
     build: .
-    command: celery worker -A tasks -l info
+    command: bash -c "make start-celery-beat & sleep 1 && make start-celery-watch"
     volumes:
       - .:/raven
     environment:
       - REDIS=redis://cache
+      - DB=mongodb://db
     depends_on:
       - db
       - cache

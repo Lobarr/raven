@@ -1,5 +1,6 @@
 import pytest
 import mock
+import asynctest
 from aiohttp import web
 from asynctest import CoroutineMock
 from expects import expect, equal, have_keys
@@ -94,7 +95,7 @@ class TestAdminController:
     with patch.object(Validate, 'object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(Admin, 'get_all') as get_all_mock:
-          with patch.object(Admin, 'get_by_id') as get_by_id_mock:
+          with asynctest.patch.object(Admin, 'get_by_id') as get_by_id_mock:
             with patch.object(Admin, 'get_by_email') as get_by_email_mock:
               with patch.object(Admin, 'get_by_username') as get_by_username_mock:
                 with patch.object(Error, 'handle') as handle_mock:
@@ -114,6 +115,7 @@ class TestAdminController:
                       'id': 'some-value'
                     }
                     mock_req.rel_url.query = mock_query
+                    get_by_id_mock.return_value = {}
                     await get_handler(mock_req)
                     get_by_id_mock.assert_called()
                     expect(get_by_id_mock.call_args[0][0]).to(equal(mock_query['id']))

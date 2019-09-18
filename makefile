@@ -19,3 +19,12 @@ test:
 
 test-watch:
 	ptw --ignore ./client --ignore ./venv -v
+
+start-celery:
+	celery worker -A api.util.tasks --loglevel=info
+
+start-celery-beat:
+	celery beat -A api.util.tasks --loglevel=info
+
+start-celery-watch:
+	nodemon -L --watch api/util/tasks.py --exec "make start-celery"

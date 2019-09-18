@@ -14,9 +14,6 @@ request_validator_schema = {
     'type': 'string',
     'allowed': ['POST', 'PUT']
   },
-  'endpoint': {
-    'type': 'string'
-  },
   'schema': {
     'type': 'dict'
   },

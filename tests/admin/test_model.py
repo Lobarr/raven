@@ -6,12 +6,12 @@ from mock import patch, MagicMock
 from asynctest import CoroutineMock
 from expects import expect, equal, raise_error, be_an, have_keys
 from api.admin import Admin, admin_validator
-from api.util import Validate, Crypt, Password
+from api.util import Validate, Crypt, Hasher
 
 class TestAdmin:
   @pytest.mark.asyncio
   async def test_create(self, *args):
-    with patch.object(Password, 'hash') as hash_mock:
+    with patch.object(Hasher, 'hash') as hash_mock:
       mock_ctx = {
         'password': 'some-value'
       }
@@ -25,7 +25,7 @@ class TestAdmin:
   @pytest.mark.asyncio
   async def test_update(self, *args):
     with patch('bson.ObjectId') as bson_object_id_mock:
-      with patch.object(Password, 'hash') as hash_mock:
+      with patch.object(Hasher, 'hash') as hash_mock:
         mock_id = 'some-value'
         bson_object_id_mock.return_value = mock_id  
         mock_ctx = {}
@@ -106,7 +106,7 @@ class TestAdmin:
   @pytest.mark.asyncio
   async def test_verify_password(self, *args):
     with asynctest.patch.object(Admin, 'get_by_username') as get_by_username_mock:
-      with patch.object(Password, 'validate') as validate_mock:
+      with patch.object(Hasher, 'validate') as validate_mock:
         mock_username = 'some-value'
         mock_password = 'some-value'
         mock_db = MagicMock()

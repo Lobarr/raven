@@ -5,19 +5,32 @@ import json
 import requests
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
+from api.util import Bytes, Async
 
 class Api:
   @staticmethod
-  async def call(method, url, params=None, data=None, json=None, cookies=None, headers=None, auth=None):
+  async def call(method=None, url=None, params=None, data=None, json=None, cookies=None, headers=None, auth=None):
     """
     makes a request
   
     @returns: request response
     """
-    return await aiohttp.request(method=method, url=url, params=params, data=data, json=json, cookies=cookies, headers=headers, auth=auth)
-  
+    async with aiohttp.request(method=method, url=url, params=params, data=data, json=json, cookies=cookies, headers=headers, auth=auth) as response:
+      return {
+        'headers': dict(response.headers),
+        'body_bytes': Bytes.encode_bytes(await response.read()).decode('utf-8'),
+        'body_text': await response.text(),
+        'content_length': response.content_length,
+        'content_type': response.content_type,
+        'cookies': dict(response.cookies),
+        'method': response.method,
+        'reason': response.reason,
+        'status': int(response.status),
+        'url': str(response.url),
+      }
+
   @staticmethod
-  def batch(requests: list) -> list:
+  async def batch(requests: list) -> list:
     """
     makes sync batch requests
   
@@ -26,8 +39,8 @@ class Api:
     """
     results = []
     for request in requests:
-        res = asyncio.run(Api.call(request['method'], request['url'], request['params'], request['data'], request['json'], request['cookies'], request['headers'], request['auth']))
-        results.append(res)
+      res = await Api.call(**request)
+      results.append(res)
     return results
 
   @staticmethod
@@ -38,8 +51,7 @@ class Api:
     @param requests: (list) requests to make
     @returns results of requests
     """
-    results = []
+    coroutines = []
     for request in requests:
-      res = await Api.call(request['method'], request['url'], request['params'], request['data'], request['json'], request['cookies'], request['headers'], request['auth'])
-      results.append(res)
-    return results
+      coroutines.append(Api.call(**request))
+    return await Async.all(coroutines)

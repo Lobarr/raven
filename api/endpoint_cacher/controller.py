@@ -22,9 +22,6 @@ async def get_handler(request: web.Request):
       service_id = request.rel_url.query.get('service_id')
       Validate.object_id(service_id)
       response = await EndpointCacher.get_by_service_id(service_id, DB.get_redis(request))
-    elif 'endpoint' in request.rel_url.query:
-      endpoint = request.rel_url.query.get('endpoint')
-      response = await EndpointCacher.get_by_endpoint(endpoint, DB.get_redis(request))
     else:
       response = await EndpointCacher.get_all(DB.get_redis(request))
     return web.json_response({

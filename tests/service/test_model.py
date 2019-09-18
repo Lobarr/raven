@@ -70,6 +70,19 @@ class TestService:
     mock_db.find.assert_called()
     mock_db.find.assert_called_with({'secure': mock_secure})
     mock_cursor.to_list.assert_called()
+
+  @pytest.mark.asyncio
+  async def test_get_by_path(self, *args):
+    mock_path = 'some-value'
+    mock_db = CoroutineMock()
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = CoroutineMock()
+    mock_db.find = MagicMock()
+    mock_db.find.return_value = mock_cursor
+    await Service.get_by_path(mock_path, mock_db)
+    mock_db.find.assert_called()
+    mock_db.find.assert_called_with({'path': mock_path})
+    mock_cursor.to_list.assert_called()
   
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
@@ -211,7 +224,8 @@ class TestService:
       try:
         mock_id = 'some-value'
         mock_db = MagicMock()
+        get_mock.return_value = None
         await Service.check_exists(mock_id, mock_db)
-        get_mock.assert_called()
       except Exception as err:
+        get_mock.assert_called()
         expect(err.args[0]).to(have_keys('message', 'status_code'))

@@ -1,6 +1,6 @@
 import mock
 from mock import patch, MagicMock
-from expects import expect, equal, be_a, have_keys
+from expects import expect, equal, be_a, have_keys, be_none
 
 from api.util import Validate
 
@@ -26,6 +26,23 @@ class TestValidate:
     except Exception as err:
       expect(err.args[0]).to(have_keys('message', 'status_code', 'errors'))
       expect(err.args[0]['errors']).to(equal(mock_schema_errors))
+  
+  @patch('re.compile')
+  def test_schema_regex(self, *args):
+    mock_field = 'some-value'
+    mock_value = 'some-value'
+    mock_error = MagicMock()
+
+    Validate.schema_regex(mock_field, mock_value, mock_error)
+    args[0].assert_called_with(mock_value)
+
+    try:
+      args[0].side_effect = Exception()
+      Validate.schema_regex(mock_field, mock_value, mock_error)
+    except Exception as err:
+      expect(err).not_to(be_none)
+    
+
     
 
     

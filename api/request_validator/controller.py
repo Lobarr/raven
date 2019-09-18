@@ -26,9 +26,6 @@ async def get_handler(request: web.Request):
     elif 'method' in request.rel_url.query:
       method = request.rel_url.query['method']
       response = await RequestValidator.get_by_method(method, DB.get(request, table))
-    elif 'endpoint' in request.rel_url.query:
-      path = request.rel_url.query['endpoint']
-      response = await RequestValidator.get_by_endpoint(path, DB.get(request, table))
     else:
       response = await RequestValidator.get_all(DB.get(request, table))
     return web.json_response({

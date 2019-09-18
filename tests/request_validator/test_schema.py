@@ -2,9 +2,9 @@ from expects import expect, have_keys, equal
 from api.request_validator import request_validator_schema
 
 def test_request_validator_schema():
-  expect(request_validator_schema).to(have_keys('_id', 'service_id', 'method', 'endpoint', 'schema', 'password_field', 'password_policy', 'err_response_code'))
+  expect(request_validator_schema).to(have_keys('_id', 'service_id', 'method', 'schema', 'password_field', 'password_policy', 'err_response_code'))
 
-  for prop in ['_id', 'service_id','method', 'endpoint', 'password_field']:
+  for prop in ['_id', 'service_id','method', 'password_field']:
     expect(request_validator_schema[prop]['type']).to(equal('string'))
   
   for prop in ['schema', 'password_policy']:

@@ -2,7 +2,7 @@ import asynctest
 import pytest
 import pydash
 from api.endpoint_cacher import EndpointCacher
-from api.endpoint_cacher.model import endpoint_cache_service_id_index, endpoint_cache_endpoint_index
+from api.endpoint_cacher.model import endpoint_cache_service_id_index
 from api.util import DB
 from api.service import Service
 from mock import MagicMock, patch
@@ -15,17 +15,17 @@ class TestEndpointCacher:
     mock_ctx = {
       '_id': 'some-value',
       'service_id': 'some-id',
-      'endpoint': 'some-endpoint'
+      'path': 'some-endpoint'
     }
     mock_db = MagicMock()
     mock_hset = CoroutineMock()
     mock_db.hset = mock_hset
     await EndpointCacher._set_indexes(mock_ctx, mock_db)
-    expect(mock_hset.await_count).to(equal(2))
+    expect(mock_hset.await_count).to(equal(1))
     for call in mock_hset.await_args_list:
-      expect([endpoint_cache_endpoint_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
+      expect([endpoint_cache_service_id_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_ctx['_id']))
-      expect([mock_ctx['service_id'], mock_ctx['endpoint']]).to(contain(call[0][2]))
+      expect([mock_ctx['service_id'], mock_ctx['path']]).to(contain(call[0][2]))
 
   @pytest.mark.asyncio
   async def test__clear_indexes(self, *args):
@@ -34,9 +34,9 @@ class TestEndpointCacher:
     mock_hdel = CoroutineMock()
     mock_db.hdel = mock_hdel
     await EndpointCacher._clear_indexes(mock_id, mock_db)
-    expect(mock_hdel.await_count).to(equal(2))
+    expect(mock_hdel.await_count).to(equal(1))
     for call in mock_hdel.await_args_list:
-      expect([endpoint_cache_endpoint_index, endpoint_cache_service_id_index]).to(contain(call[0][0]))
+      expect([endpoint_cache_service_id_index]).to(contain(call[0][0]))
       expect(call[0][1]).to(equal(mock_id))
 
   @pytest.mark.asyncio
@@ -65,14 +65,11 @@ class TestEndpointCacher:
         mock_service_db = MagicMock()
         mock_sadd = CoroutineMock()
         mock_hmset_dict = CoroutineMock()
-        mock_expire = CoroutineMock()
         mock_endpoint_cacher_db.sadd = mock_sadd
         mock_endpoint_cacher_db.hmset_dict = mock_hmset_dict
-        mock_endpoint_cacher_db.expire = mock_expire
         await EndpointCacher.create(mock_ctx, mock_endpoint_cacher_db, mock_service_db)
         check_exists_mock.assert_awaited()
         _set_indexes_mock.assert_called()
-        mock_expire.assert_awaited()
         expect(mock_hmset_dict.await_args[0][1]).to(have_keys('service_id', 'response_codes', '_id'))
         expect(mock_hmset_dict.await_args[0][1]['service_id']).to(equal(mock_ctx['service_id']))
         expect(mock_sadd.await_count).to(equal(2))
@@ -134,7 +131,7 @@ class TestEndpointCacher:
 
   @pytest.mark.asyncio
   async def test_get_by_service_id(self, *args):
-    with asynctest.patch.object(EndpointCacher, '_search_indexes') as _search_indes_mock:
+    with asynctest.patch.object(EndpointCacher, '_search_indexes') as _search_index_mock:
       response_codes_id = 'some-id'
       expected_cache = {
         'endpoint': 'some-endpoint',
@@ -148,13 +145,13 @@ class TestEndpointCacher:
       mock_db = MagicMock()
       mock_hgetall = CoroutineMock()
       mock_smembers = CoroutineMock()
-      _search_indes_mock.return_value = mock_keys
+      _search_index_mock.return_value = mock_keys
       mock_hgetall.return_value = expected_cache
       mock_db.hgetall = mock_hgetall
       mock_db.smembers = mock_smembers
       mock_smembers.return_value = expected_response_codes
       caches = await EndpointCacher.get_by_service_id(mock_service_id, mock_db)
-      _search_indes_mock.assert_awaited_with(endpoint_cache_service_id_index, mock_service_id, mock_db)
+      _search_index_mock.assert_awaited_with(endpoint_cache_service_id_index, mock_service_id, mock_db)
       mock_hgetall.assert_awaited()
       expect(mock_hgetall.await_args[0][0]).to(equal(mock_keys[0]))
       mock_smembers.assert_awaited()
@@ -162,36 +159,6 @@ class TestEndpointCacher:
       expect(caches).to(have_len(1))
       expect(caches[0]).to(equal(pydash.merge(expected_cache, {'response_codes': expected_response_codes})))
 
-  
-  @pytest.mark.asyncio
-  async def test_get_by_endpoint(self, *args):
-    with asynctest.patch.object(EndpointCacher, '_search_indexes') as _search_indes_mock:
-      response_codes_id = 'some-id'
-      expected_cache = {
-        'endpoint': 'some-endpoint',
-        'timeout': 10,
-        'response_codes': response_codes_id,
-        '_id': 'some-id'
-      }
-      expected_response_codes = [200, 300]
-      mock_endpoint = 'some-value'
-      mock_keys = ['some-id']
-      mock_db = MagicMock()
-      mock_hgetall = CoroutineMock()
-      mock_smembers = CoroutineMock()
-      _search_indes_mock.return_value = mock_keys
-      mock_hgetall.return_value = expected_cache
-      mock_db.hgetall = mock_hgetall
-      mock_db.smembers = mock_smembers
-      mock_smembers.return_value = expected_response_codes
-      caches = await EndpointCacher.get_by_endpoint(mock_endpoint, mock_db)
-      _search_indes_mock.assert_awaited_with(endpoint_cache_endpoint_index, mock_endpoint, mock_db)
-      mock_hgetall.assert_awaited()
-      expect(mock_hgetall.await_args[0][0]).to(equal(mock_keys[0]))
-      mock_smembers.assert_awaited()
-      expect(mock_smembers.await_args[0][0]).to(equal(response_codes_id))
-      expect(caches).to(have_len(1))
-      expect(caches[0]).to(equal(pydash.merge(expected_cache, {'response_codes': expected_response_codes})))
   
   @pytest.mark.asyncio
   async def test_get_all(self, *args):
@@ -273,3 +240,32 @@ class TestEndpointCacher:
     mock_cache = pydash.merge(mock_cache, {'response_codes': 'some-value'})
     await EndpointCacher.remove_status_codes(mock_status_codes, mock_id, mock_db)
     expect(mock_srem.await_count).to(equal(len(mock_status_codes)))
+
+  @pytest.mark.asyncio
+  async def test_set_cache(self, *args):
+    with patch('json.dumps') as dumps_mock:
+      expected_ctx = {}
+      dumps_mock.return_value = expected_ctx
+      mock_hash = ''
+      mock_ctx = {
+        'test': None
+      }
+      mock_timeout = 'some-value'
+      mock_db = MagicMock()
+      mock_db.set = CoroutineMock()
+      mock_db.expire = CoroutineMock()
+      await EndpointCacher.set_cache(mock_hash, mock_ctx, mock_timeout, mock_db)
+      expect(dumps_mock.call_args[0][0]).not_to(have_keys('test'))
+      expect(mock_db.set.await_args[0][0]).to(equal(mock_hash))
+      expect(mock_db.set.await_args[0][1]).to(equal(expected_ctx))
+      expect(mock_db.expire.await_args[0][0]).to(equal(mock_hash))
+      expect(mock_db.expire.await_args[0][1]).to(equal(mock_timeout))
+
+
+  @pytest.mark.asyncio
+  async def test_get_cach(self, *args):
+    mock_hash = 'some-value'
+    mock_db = MagicMock()
+    mock_db.get = CoroutineMock()
+    await EndpointCacher.get_cache(mock_hash, mock_db)
+    expect(mock_db.get.await_args[0][0]).to(equal(mock_hash))
