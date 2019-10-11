@@ -15,7 +15,7 @@ table = 'event'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    Validate.schema(ctx, event_validator)
+    Validate.validate_schema(ctx, event_validator)
     await Event.create(ctx, DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Event created',
@@ -32,12 +32,12 @@ async def get_handler(request: web.Request):
       services = await Event.get_all(DB.get(request, table))
     else:
       if 'id' in request.rel_url.query:
-        Validate.object_id(request.rel_url.query.get('id'))
+        Validate.validate_object_id(request.rel_url.query.get('id'))
         service = await Event.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
         if service is not None:
           services.append(service)
       elif 'circuit_breaker_id' in request.rel_url.query:
-        Validate.object_id(request.rel_url.query.get('circuit_breaker_id'))
+        Validate.validate_object_id(request.rel_url.query.get('circuit_breaker_id'))
         services = await Event.get_by_circuit_breaker_id(request.rel_url.query.get('circuit_breaker_id'), DB.get(request, table))
       elif 'target' in request.rel_url.query:
         services = await Event.get_by_target(request.rel_url.query.get('target'), DB.get(request, table))
@@ -53,8 +53,8 @@ async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     event_id = request.rel_url.query['id']
-    Validate.object_id(event_id)
-    Validate.schema(ctx, event_validator)
+    Validate.validate_object_id(event_id)
+    Validate.validate_schema(ctx, event_validator)
     await Event.update(event_id, pydash.omit(ctx, '_id'), DB.get(request, table))
     return web.json_response({
       'message': 'event updated',
@@ -65,7 +65,7 @@ async def patch_handler(request: web.Request):
 @router.delete('/event')
 async def delete_handler(request: web.Request):
   try:
-    Validate.object_id(request.rel_url.query.get('id'))
+    Validate.validate_object_id(request.rel_url.query.get('id'))
     await Event.remove(request.rel_url.query.get('id'), DB.get(request, table))
     return web.json_response({
       'message': 'Service deleted',

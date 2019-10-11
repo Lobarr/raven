@@ -16,7 +16,7 @@ table = 'circuit_breaker'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    Validate.schema(ctx, circuit_breaker_validator)
+    Validate.validate_schema(ctx, circuit_breaker_validator)
     await CircuitBreaker.create(circuit_breaker_validator.normalized(ctx), DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Circuit breaker created',
@@ -34,12 +34,12 @@ async def get_handler(request: web.Request):
     else:
       circuit_breakers = []
       if 'id' in request.rel_url.query:
-        Validate.object_id(request.rel_url.query.get('id'))
+        Validate.validate_object_id(request.rel_url.query.get('id'))
         circuit_breaker = await CircuitBreaker.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
         if circuit_breaker is not None:
           circuit_breakers.append(circuit_breaker)
       elif 'service_id' in request.rel_url.query:
-        Validate.object_id(request.rel_url.query.get('service_id'))
+        Validate.validate_object_id(request.rel_url.query.get('service_id'))
         circuit_breakers = await CircuitBreaker.get_by_service_id(request.rel_url.query.get('service_id'), DB.get(request, table))
       elif 'status_code' in request.rel_url.query:
         circuit_breakers = await CircuitBreaker.get_by_status_code(int(request.rel_url.query.get('status_code')), DB.get(request, table))
@@ -59,8 +59,8 @@ async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     circuit_breaker_id = request.rel_url.query['id']
-    Validate.schema(ctx, circuit_breaker_validator)
-    Validate.object_id(circuit_breaker_id)
+    Validate.validate_schema(ctx, circuit_breaker_validator)
+    Validate.validate_object_id(circuit_breaker_id)
     await CircuitBreaker.update(circuit_breaker_id, pydash.omit(ctx, 'id'), DB.get(request, table))
     return web.json_response({
       'message': 'Circuit breaker updated',
@@ -71,7 +71,7 @@ async def patch_handler(request: web.Request):
 @router.delete('/circuit_breaker')
 async def delete_handler(request: web.Request):
   try:
-    Validate.object_id(request.rel_url.query.get('id'))
+    Validate.validate_object_id(request.rel_url.query.get('id'))
     await CircuitBreaker.remove(request.rel_url.query.get('id'), DB.get(request, table))
     return web.json_response({
       'message': 'Circuit breaker deleted'

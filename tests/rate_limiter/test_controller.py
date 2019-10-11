@@ -17,7 +17,7 @@ class TestRateLimiterController:
       with patch('json.loads') as loads_mock:
         with patch.object(RateLimiter, 'create_rule') as create_rule_mock:
           with patch.object(Error, 'handle') as handle_mock:
-            with patch.object(Validate, 'schema') as validate_mock:
+            with patch.object(Validate, 'validate_schema') as validate_schema_mock:
               mock_req = MagicMock()
               mock_test = CoroutineMock()
               mock_req.text = mock_test
@@ -25,7 +25,7 @@ class TestRateLimiterController:
               await create_rule(mock_req)
               mock_req.text.assert_called()
               loads_mock.assert_called()
-              validate_mock.assert_called()
+              validate_schema_mock.assert_called()
               get_redis_mock.assert_called()
               get_redis_mock.assert_called()
               create_rule_mock.assert_called()
@@ -37,12 +37,12 @@ class TestRateLimiterController:
 
   @pytest.mark.asyncio
   async def test_update_rule(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
           with patch.object(RateLimiter, 'update_rule') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
                 mock_query = {
@@ -54,8 +54,8 @@ class TestRateLimiterController:
                 loads_mock.assert_called()
                 update_mock.assert_called()
                 get_redis_mock.assert_called_with(mock_req)
-                object_id_mock.assert_called_with(mock_query['id'])
-                validate_mock.assert_called()
+                validate_object_id_mock.assert_called_with(mock_query['id'])
+                validate_schema_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
@@ -65,7 +65,7 @@ class TestRateLimiterController:
 
   @pytest.mark.asyncio
   async def test_delete_rule(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch.object(RateLimiter, 'delete_rule') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
@@ -78,7 +78,7 @@ class TestRateLimiterController:
             await delete_rule(mock_req)
             remove_mock.assert_called()
             get_redis_mock.assert_called_with(mock_req)
-            object_id_mock.assert_called_with(mock_ctx['id'])
+            validate_object_id_mock.assert_called_with(mock_ctx['id'])
             expect(remove_mock.call_args[0][0]).to(equal(mock_ctx['id']))
             
             mock_err = Exception()
@@ -95,7 +95,7 @@ class TestRateLimiterController:
   
   @pytest.mark.asyncio
   async def test_retrieve_rule(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_mock:
         with patch.object(RateLimiter, 'get_all_rules') as get_all_rules_mock:
           with asynctest.patch.object(RateLimiter, 'get_rule_by_id') as get_rule_by_id_mock:
@@ -149,7 +149,7 @@ class TestRateLimiterController:
       with patch('json.loads') as loads_mock:
         with patch.object(RateLimiter, 'create_entry') as create_entry_rule:
           with patch.object(Error, 'handle') as handle_mock:
-            with patch.object(Validate, 'schema') as validate_mock:
+            with patch.object(Validate, 'validate_schema') as validate_schema_mock:
               mock_req = MagicMock()
               mock_test = CoroutineMock()
               mock_req.text = mock_test
@@ -157,7 +157,7 @@ class TestRateLimiterController:
               await create_entry(mock_req)
               mock_req.text.assert_called()
               loads_mock.assert_called()
-              validate_mock.assert_called()
+              validate_schema_mock.assert_called()
               get_redis_mock.assert_called()
               get_redis_mock.assert_called()
               create_entry_rule.assert_called()
@@ -169,12 +169,12 @@ class TestRateLimiterController:
 
   @pytest.mark.asyncio
   async def test_update_entry(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
           with patch.object(RateLimiter, 'update_entry') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
                 mock_query = {
@@ -186,8 +186,8 @@ class TestRateLimiterController:
                 loads_mock.assert_called()
                 update_mock.assert_called()
                 get_redis_mock.assert_called_with(mock_req)
-                object_id_mock.assert_called_with(mock_query['id'])
-                validate_mock.assert_called()
+                validate_object_id_mock.assert_called_with(mock_query['id'])
+                validate_schema_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
@@ -197,7 +197,7 @@ class TestRateLimiterController:
 
   @pytest.mark.asyncio
   async def test_delete_entry(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch.object(RateLimiter, 'delete_entry') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
@@ -210,7 +210,7 @@ class TestRateLimiterController:
             await delete_entry(mock_req)
             remove_mock.assert_called()
             get_redis_mock.assert_called_with(mock_req)
-            object_id_mock.assert_called_with(mock_ctx['id'])
+            validate_object_id_mock.assert_called_with(mock_ctx['id'])
             expect(remove_mock.call_args[0][0]).to(equal(mock_ctx['id']))
             
             mock_err = Exception()
@@ -227,7 +227,7 @@ class TestRateLimiterController:
   
   @pytest.mark.asyncio
   async def test_retrieve_entry(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_mock:
         with asynctest.patch.object(RateLimiter, 'get_all_entries') as get_all_entries_mock:
           with asynctest.asynctest.patch.object(RateLimiter, 'get_entry_by_id') as get_entry_by_id_mock:

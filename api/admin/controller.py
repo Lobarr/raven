@@ -14,7 +14,7 @@ table = 'admin'
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    Validate.schema(ctx, admin_validator)
+    Validate.validate_schema(ctx, admin_validator)
     await Admin.create(ctx, DB.get(request, table))
     return web.json_response({
       'message': 'Admin created',
@@ -31,7 +31,7 @@ async def get_handler(request: web.Request):
     else:
       admins = []
       if 'id' in request.rel_url.query:
-        Validate.object_id(request.rel_url.query.get('id'))
+        Validate.validate_object_id(request.rel_url.query.get('id'))
         admin = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
         if admin is not None:
           admins.append(admin)
@@ -51,8 +51,8 @@ async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     admin_id = request.rel_url.query['id']
-    Validate.schema(ctx, admin_validator)
-    Validate.object_id(admin_id)
+    Validate.validate_schema(ctx, admin_validator)
+    Validate.validate_object_id(admin_id)
     await Admin.update(admin_id, ctx, DB.get(request, table))
     return web.json_response({
       'message': 'Admin updated',
@@ -63,7 +63,7 @@ async def patch_handler(request: web.Request):
 @router.delete('/admin')
 async def delete_handler(request: web.Request):
   try:
-    Validate.object_id(request.rel_url.query.get('id'))
+    Validate.validate_object_id(request.rel_url.query.get('id'))
     await Admin.remove(request.rel_url.query.get('id'), DB.get(request, table))
     return web.json_response({
       'message': 'Admin deleted'

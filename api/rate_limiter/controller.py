@@ -19,7 +19,7 @@ async def retrieve_rule(request: web.Request):
 			response = await RateLimiter.get_rule_by_service_id(service_id, DB.get_redis(request))
 		elif 'id' in request.rel_url.query:
 			_id = request.rel_url.query.get('id')
-			Validate.object_id(_id)
+			Validate.validate_object_id(_id)
 			rule = await RateLimiter.get_rule_by_id(_id, DB.get_redis(request))
 			if rule:
 				response.append(rule)
@@ -37,7 +37,7 @@ async def retrieve_rule(request: web.Request):
 async def create_rule(request: web.Request):
 	try:
 		ctx = json.loads(await request.text())
-		Validate.schema(ctx, rate_limit_rule_validator)
+		Validate.validate_schema(ctx, rate_limit_rule_validator)
 		await RateLimiter.create_rule(ctx, DB.get_redis(request))
 		return web.json_response({
 				'message': 'Created rate limiter rule',
@@ -51,8 +51,8 @@ async def update_rule(request: web.Request):
 	try:
 		ctx = json.loads(await request.text())
 		_id = request.rel_url.query.get('id')
-		Validate.schema(ctx, rate_limit_rule_validator)
-		Validate.object_id(_id)
+		Validate.validate_schema(ctx, rate_limit_rule_validator)
+		Validate.validate_object_id(_id)
 		await RateLimiter.update_rule(_id, ctx, DB.get_redis(request))
 		return web.json_response({
 				'message': 'rate limiter rule updated',
@@ -66,7 +66,7 @@ async def delete_rule(request: web.Request):
 	try:
 		# id to delete is from query params
 		_id = request.rel_url.query.get('id')
-		Validate.object_id(_id)
+		Validate.validate_object_id(_id)
 		await RateLimiter.delete_rule(_id, DB.get_redis(request))
 		return web.json_response({
 				'message': 'rate limiter rule deleted',
@@ -81,14 +81,14 @@ async def retrieve_entry(request: web.Request):
 		response = []
 		if 'rule_id' in request.rel_url.query:
 			rule_id = request.rel_url.query.get('rule_id')
-			Validate.object_id(rule_id)
+			Validate.validate_object_id(rule_id)
 			response = await RateLimiter.get_entry_by_rule_id(rule_id, DB.get_redis(request))
 		elif 'host' in request.rel_url.query:
 			host = request.rel_url.query.get('host')
 			response = await RateLimiter.get_entry_by_host(host, DB.get_redis(request))
 		elif 'id' in request.rel_url.query:
 			_id  = request.rel_url.query.get('id')
-			Validate.object_id(_id)
+			Validate.validate_object_id(_id)
 			response = await RateLimiter.get_entry_by_id(_id, DB.get_redis(request))
 		else:
 			response = await RateLimiter.get_all_entries(DB.get_redis(request))
@@ -103,7 +103,7 @@ async def retrieve_entry(request: web.Request):
 async def create_entry(request: web.Request):
 	try:
 		ctx = json.loads(await request.text())
-		Validate.schema(ctx, rate_limit_entry_validator)
+		Validate.validate_schema(ctx, rate_limit_entry_validator)
 		await RateLimiter.create_entry(ctx, DB.get_redis(request))
 		return web.json_response({
 				'message': "Created rate limiter entry",
@@ -117,8 +117,8 @@ async def update_entry(request: web.Request):
 	try:
 		ctx = json.loads(await request.text())
 		_id = request.rel_url.query.get('id')
-		Validate.schema(ctx, rate_limit_entry_validator)
-		Validate.object_id(_id)
+		Validate.validate_schema(ctx, rate_limit_entry_validator)
+		Validate.validate_object_id(_id)
 		await RateLimiter.update_entry(_id, ctx, DB.get_redis(request))
 		return web.json_response({
 				'message': 'rate limiter entry updated',
@@ -132,7 +132,7 @@ async def delete_entry(request: web.Request):
 	try:
 		# id to delete is from query params
 		_id = request.rel_url.query.get('id')
-		Validate.object_id(_id)
+		Validate.validate_object_id(_id)
 		await RateLimiter.delete_entry(_id, DB.get_redis(request))
 		return web.json_response({
 				'message': 'rate limiter entry deleted',

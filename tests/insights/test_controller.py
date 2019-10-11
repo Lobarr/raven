@@ -17,13 +17,13 @@ class TestInsightsController:
       with patch('json.loads') as loads_mock:
         with patch.object(Insights, 'create') as create_mock:
           with patch.object(Error, 'handle') as handle_mock:
-            with patch.object(Validate, 'schema') as validate_mock:
+            with patch.object(Validate, 'validate_schema') as validate_schem_mock:
               mock_req = MagicMock()
               mock_req.text = CoroutineMock()
               await post_handler(mock_req)
               mock_req.text.assert_called()
               loads_mock.assert_called()
-              validate_mock.assert_called()
+              validate_schem_mock.assert_called()
               get_mock.assert_called()
               create_mock.assert_called()
               
@@ -34,12 +34,12 @@ class TestInsightsController:
 
   @pytest.mark.asyncio
   async def test_patch_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch('json.loads') as loads_mock:
           with patch.object(Insights, 'update') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schem_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
                 mock_query = {
@@ -52,7 +52,7 @@ class TestInsightsController:
                 update_mock.assert_called()
                 get_mock.assert_called_with(mock_req, table)
                 object_id_mock.assert_called_with(mock_query['id'])
-                validate_mock.assert_called()
+                validate_schem_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
@@ -62,7 +62,7 @@ class TestInsightsController:
 
   @pytest.mark.asyncio
   async def test_delete_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(Insights, 'remove') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
@@ -92,7 +92,7 @@ class TestInsightsController:
   
   @pytest.mark.asyncio
   async def test_get_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(Insights, 'get_all') as get_all_mock:
           with asynctest.patch.object(Insights, 'get_by_id') as get_by_id_mock:

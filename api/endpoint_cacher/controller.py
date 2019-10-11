@@ -14,13 +14,13 @@ async def get_handler(request: web.Request):
     response = []
     if 'id' in request.rel_url.query:
       _id = request.rel_url.query.get('id')
-      Validate.object_id(_id)
+      Validate.validate_object_id(_id)
       cache = await EndpointCacher.get_by_id(_id, DB.get_redis(request))
       if not pydash.is_empty(cache):
         response.append(cache)
     elif 'service_id' in request.rel_url.query:
       service_id = request.rel_url.query.get('service_id')
-      Validate.object_id(service_id)
+      Validate.validate_object_id(service_id)
       response = await EndpointCacher.get_by_service_id(service_id, DB.get_redis(request))
     else:
       response = await EndpointCacher.get_all(DB.get_redis(request))
@@ -36,8 +36,8 @@ async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     _id = request.rel_url.query.get('id')
-    Validate.schema(ctx, endpoint_cache_validator)
-    Validate.object_id(_id)
+    Validate.validate_schema(ctx, endpoint_cache_validator)
+    Validate.validate_object_id(_id)
     await EndpointCacher.update(_id, pydash.omit(ctx, 'service_id', 'response_codes'), DB.get_redis(request))
     return web.json_response({
       'message': 'Endpoint cache updated',
@@ -52,8 +52,8 @@ async def patch_handler_response_codes(request: web.Request):
     ctx = json.loads(await request.text())
     _id = request.rel_url.query.get('id')
     action = request.rel_url.query.get('action')
-    Validate.object_id(_id)
-    Validate.schema(ctx, endpoint_cache_validator)
+    Validate.validate_object_id(_id)
+    Validate.validate_schema(ctx, endpoint_cache_validator)
     if action == 'add':
       await EndpointCacher.add_status_codes(ctx['response_codes'], _id, DB.get_redis(request))
     elif action == 'remove':
@@ -74,7 +74,7 @@ async def patch_handler_response_codes(request: web.Request):
 async def delete_handler(request: web.Request):
   try:
     _id = request.rel_url.query.get('id')
-    Validate.object_id(_id)
+    Validate.validate_object_id(_id)
     await EndpointCacher.delete(_id, DB.get_redis(request))
     return web.json_response({
       'message': 'Endpoint cache deleted',
@@ -87,7 +87,7 @@ async def delete_handler(request: web.Request):
 async def post_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
-    Validate.schema(ctx, endpoint_cache_validator)
+    Validate.validate_schema(ctx, endpoint_cache_validator)
     await EndpointCacher.create(ctx, DB.get_redis(request), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Endpoint cache created', 

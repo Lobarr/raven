@@ -4,13 +4,13 @@ from cerberus import Validator
 
 class Validate:
   @staticmethod
-  def object_id(id: str):
+  def validate_object_id(id: str):
     """
     validates a bson object id
   
     @param id: (str) id to be validated
     """
-    if bson.ObjectId.is_valid(id) != True:
+    if not bson.ObjectId.is_valid(id):
       raise Exception({
         'message': 'Invalid id provided',
         'status_code': 400
@@ -18,14 +18,14 @@ class Validate:
   
 
   @staticmethod
-  def schema(ctx: object, validator: Validator):
+  def validate_schema(schema: object, validator: Validator):
     """
     validates a given object with given validator
   
     @param ctx: (object) object to be validated
     @param validator: (Validator) validator to validate schema with
     """
-    if not validator.validate(ctx):
+    if not validator.validate(schema):
       raise Exception({
         'message': 'Invalid data provided',
         'status_code': 400,
@@ -33,9 +33,9 @@ class Validate:
       })
 
   @staticmethod
-  def schema_regex(field, value, error):
+  def validate_regex_field(field, regex, error):
     try:
-      re.compile(value)
+      re.compile(regex)
     except re.error as err:
       error(field, 'Must be a valid regex')
     

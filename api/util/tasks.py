@@ -29,11 +29,43 @@ tasks.conf.beat_schedule = {
   }
 }
 
+def arg_needs_resource(arg: str, resource: str) -> bool:
+  """
+  checks if an arg needs a mongo instance
+  """
+  return pydash.is_string(arg) and resource in arg
+
+def get_mongo_collection(arg: str) -> str:
+  """
+  parses and returns a mongo collection from an arg
+  """
+  return arg.split(':')[1]
+
+def is_supported_func(func: str, funcs: dict) -> bool:
+  return func in funcs
+
+def map_args_to_resources(args: list, resources: dict) -> list:
+  """
+  maps args to resources singleton instances
+  """
+  mapped_args = []
+
+  for index, arg in enumerate(args):
+    if arg_needs_resource(arg, 'mongo'):
+      collection = get_mongo_collection(arg)
+      mapped_args.append(resources['mongo'][collection])
+    elif arg_needs_resource(arg, 'redis'):
+      mapped_args.append(resources['redis'])
+    else:
+      mapped_args.append(arg)
+  
+  return mapped_args
+
 class TaskProvider(Task):
-  _mongo = None
-  _redis = None
-  _loop = None
-  _funcs = {
+  _mongo_instance = None
+  _redis_instance = None
+  _event_loop = None
+  _supported_funcs = {
     'Admin.count': Admin.count,
     'Api.call': Api.call,
     'CircuitBreaker.incr_count': CircuitBreaker.incr_count,
@@ -53,24 +85,25 @@ class TaskProvider(Task):
 
   @property
   def mongo(self):
-    if self._mongo is None:
-        self._mongo = AsyncIOMotorClient(DB).raven
-    return self._mongo
+    if self._mongo_instance is None:
+        self._mongo_instance = AsyncIOMotorClient(DB).raven
+    return self._mongo_instance
   
   @property
   def redis(self):
-    if self._redis is None:
-      self._redis = self.loop.run_until_complete(aioredis.create_redis(REDIS))
-    return self._redis
+    if self._redis_instance is None:
+      self._redis_instance = self.loop.run_until_complete(aioredis.create_redis_instance(REDIS))
+    return self._redis_instance
 
   @property
   def loop(self):
-    if self._loop is None:
-      self._loop = asyncio.get_event_loop()
-    return self._loop
+    if self._event_loop is None:
+      self._event_loop = asyncio.get_event_event_loop()
+    return self._event_loop
+
 
 @tasks.task(base=TaskProvider, name='raven.api.task.async')
-def handle_task_async(ctx: dict):
+def queue_async_func(params: dict):
   """
   handles async task
 
@@ -78,21 +111,20 @@ def handle_task_async(ctx: dict):
   mongo: "mongo:collection_name"
   redis: "redis"
   """
-  _args = ctx['args']
-  for index, arg in enumerate(_args):
-    if pydash.is_string(arg) and 'mongo' in arg:
-      collection = arg.split(':')[1]
-      _args[index] = handle_task_async.mongo[collection]
-    elif pydash.is_string(arg) and 'redis' in arg:
-      _args[index] = handle_task_async.redis
-  if ctx['func'] in handle_task_async._funcs:
-    new_args = tuple(_args)
-    return handle_task_async.loop.run_until_complete(handle_task_async._funcs[ctx['func']](*new_args, **ctx['kwargs']))
+  resources = {
+    'mongo': queue_async_func.mongo,
+    'redis': queue_async_func.redis
+  }
+  
+  if is_supported_func(params['func'], queue_async_func._supported_funcs):
+    mapped_args = map_args_to_resources(params['args'], resources)
+    return queue_async_func.loop.run_until_complete(queue_async_func._supported_funcs[params['func']](*mapped_args, **params['kwargs']))
+
 
 @tasks.task(base=TaskProvider, name='raven.api.task.sync')
-def handle_task_sync(ctx):
+def queue_sync_func(params):
   """
   handles sync task
   """
-  if ctx['func'] in handle_task_sync._funcs:
-    return handle_task_sync._funcs[ctx['func']](*ctx['args'], **ctx['kwargs'])
+  if is_supported_func(params['func'], queue_sync_func._supported_funcs):
+    return queue_sync_func._supported_funcs[params['func']](*params['args'], **params['kwargs'])

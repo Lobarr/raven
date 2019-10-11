@@ -7,7 +7,7 @@ service_schema = {
   },
   'path': {
     'type': 'string',
-    'check_with': Validate.schema_regex
+    'check_with': Validate.validate_regex_field
   },
   'state': {
     'type': 'string',
