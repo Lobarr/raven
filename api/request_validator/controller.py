@@ -15,11 +15,11 @@ async def get_handler(request: web.Request):
   try:
     response = []
     if 'service_id' in request.rel_url.query:
-      Validate.object_id(request.rel_url.query['service_id'])
+      Validate.validate_object_id(request.rel_url.query['service_id'])
       service_id = request.rel_url.query['service_id']
       response = await RequestValidator.get_by_service_id(service_id, DB.get(request, table))
     elif 'id' in request.rel_url.query:
-      Validate.object_id(request.rel_url.query.get('id'))
+      Validate.validate_object_id(request.rel_url.query.get('id'))
       req_validator = await RequestValidator.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
       if req_validator is not None:
         response.append(req_validator)
@@ -39,7 +39,7 @@ async def get_handler(request: web.Request):
 async def create_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
-    Validate.schema(body, request_validator)
+    Validate.validate_schema(body, request_validator)
     await RequestValidator.create(request_validator.normalized(body), DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
         'message': 'Request validator created',
@@ -53,8 +53,8 @@ async def update_handler(request: web.Request):
   try:
     id = request.rel_url.query['id']
     body = json.loads(await request.text())
-    Validate.object_id(id)
-    Validate.schema(body, request_validator)
+    Validate.validate_object_id(id)
+    Validate.validate_schema(body, request_validator)
     await RequestValidator.update(id, body, DB.get(request, table))
     return web.json_response({
       'message': 'request validator updated',
@@ -67,7 +67,7 @@ async def update_handler(request: web.Request):
 async def delete_handler(request: web.Request):
   try:
     id = request.rel_url.query.get('id')
-    Validate.object_id(id)
+    Validate.validate_object_id(id)
     await RequestValidator.delete(id, DB.get(request, table))
     return web.json_response({
       'message': 'request validator deleted',

@@ -19,7 +19,7 @@ class TestRequstValidatorController:
           with patch('json.loads') as loads_mock:
             with patch.object(RequestValidator, 'create') as create_mock:
               with patch.object(Error, 'handle') as handle_mock:
-                with patch.object(Validate, 'schema') as validate_mock:
+                with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                   mock_req = MagicMock()
                   mock_text = CoroutineMock()
                   mock_req.text = mock_text
@@ -27,7 +27,7 @@ class TestRequstValidatorController:
                   await create_handler(mock_req)
                   mock_req.text.assert_called()
                   loads_mock.assert_called()
-                  validate_mock.assert_called()
+                  validate_schema_mock.assert_called()
                   get_mock.assert_called()
                   create_mock.assert_called()
                   normalized_mock.assert_called_with(mock_text)
@@ -39,12 +39,12 @@ class TestRequstValidatorController:
 
   @pytest.mark.asyncio
   async def test_update_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch('json.loads') as loads_mock:
           with patch.object(RequestValidator, 'update') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
                 mock_query = {
@@ -56,8 +56,8 @@ class TestRequstValidatorController:
                 loads_mock.assert_called()
                 update_mock.assert_called()
                 get_mock.assert_called_with(mock_req, table)
-                object_id_mock.assert_called_with(mock_query['id'])
-                validate_mock.assert_called()
+                validate_object_id_mock.assert_called_with(mock_query['id'])
+                validate_schema_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
@@ -67,7 +67,7 @@ class TestRequstValidatorController:
 
   @pytest.mark.asyncio
   async def test_delete_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(RequestValidator, 'delete') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
@@ -80,7 +80,7 @@ class TestRequstValidatorController:
             await delete_handler(mock_req)
             remove_mock.assert_called()
             get_mock.assert_called_with(mock_req, table)
-            object_id_mock.assert_called_with(mock_ctx['id'])
+            validate_object_id_mock.assert_called_with(mock_ctx['id'])
             expect(remove_mock.call_args[0][0]).to(equal(mock_ctx['id']))
             
             mock_err = Exception()
@@ -97,7 +97,7 @@ class TestRequstValidatorController:
   
   @pytest.mark.asyncio
   async def test_get_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get') as get_mock:
         with patch.object(RequestValidator, 'get_all') as get_all_mock:
           with asynctest.patch.object(RequestValidator, 'get_by_id') as get_by_id_mock:

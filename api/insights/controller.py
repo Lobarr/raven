@@ -14,7 +14,7 @@ table = 'insights'
 async def post_handler(request: web.Request):
   try:
     body = json.loads(await request.text())
-    Validate.schema(body, insights_validator)
+    Validate.validate_schema(body, insights_validator)
     await Insights.create(body, DB.get(request, table), DB.get(request, controller.table))
     return web.json_response({
       'message': 'Insight created',
@@ -58,8 +58,8 @@ async def patch_handler(request: web.Request):
   try:
     ctx = json.loads(await request.text())
     service_id = request.rel_url.query['id']
-    Validate.object_id(service_id)
-    Validate.schema(ctx, insights_validator)
+    Validate.validate_object_id(service_id)
+    Validate.validate_schema(ctx, insights_validator)
     await Insights.update(service_id, pydash.omit(ctx, 'id'), DB.get(request, table))
     return web.json_response({
       'message': 'insight updated',
@@ -71,7 +71,7 @@ async def patch_handler(request: web.Request):
 async def delete_handler(request: web.Request):
   try:
     service_id = request.rel_url.query.get('id')
-    Validate.object_id(service_id)
+    Validate.validate_object_id(service_id)
     await Insights.remove(service_id, DB.get(request, table))
     return web.json_response({
       'message': 'insight deleted',

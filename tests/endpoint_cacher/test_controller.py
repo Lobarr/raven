@@ -18,7 +18,7 @@ class TestEndpointCacherController:
         with patch('json.loads') as loads_mock:
           with patch.object(EndpointCacher, 'create') as create_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                 mock_req = MagicMock()
                 mock_test = CoroutineMock()
                 mock_req.text = mock_test
@@ -26,7 +26,7 @@ class TestEndpointCacherController:
                 await post_handler(mock_req)
                 mock_req.text.assert_called()
                 loads_mock.assert_called()
-                validate_mock.assert_called()
+                validate_schema_mock.assert_called()
                 get_mock.assert_called()
                 get_redis_mock.assert_called()
                 create_mock.assert_called()
@@ -38,12 +38,12 @@ class TestEndpointCacherController:
 
   @pytest.mark.asyncio
   async def test_patch_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
           with patch.object(EndpointCacher, 'update') as update_mock:
             with patch.object(Error, 'handle') as handle_mock:
-              with patch.object(Validate, 'schema') as validate_mock:
+              with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                 mock_req = MagicMock()
                 mock_req.text = CoroutineMock()
                 mock_query = {
@@ -55,8 +55,8 @@ class TestEndpointCacherController:
                 loads_mock.assert_called()
                 update_mock.assert_called()
                 get_redis_mock.assert_called_with(mock_req)
-                object_id_mock.assert_called_with(mock_query['id'])
-                validate_mock.assert_called()
+                validate_object_id_mock.assert_called_with(mock_query['id'])
+                validate_schema_mock.assert_called()
                 expect(update_mock.call_args[0][0]).to(equal(mock_query['id']))
                 
                 mock_err = Exception()
@@ -66,13 +66,13 @@ class TestEndpointCacherController:
 
   @pytest.mark.asyncio
   async def test_patch_handler_response_codes(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch('json.loads') as loads_mock:
           with asynctest.patch.object(EndpointCacher, 'add_status_codes') as add_status_codes_mock:
             with asynctest.patch.object(EndpointCacher, 'remove_status_codes') as remove_status_codes_mock:
               with patch.object(Error, 'handle') as handle_mock:
-                with patch.object(Validate, 'schema') as validate_mock:
+                with patch.object(Validate, 'validate_schema') as validate_schema_mock:
                   get_redis_mock.return_value = {}
                   mock_query = {
                     'id': 'some-value',
@@ -86,8 +86,8 @@ class TestEndpointCacherController:
                   mock_req.rel_url.query = mock_query
                   loads_mock.return_value = mock_ctx
                   await patch_handler_response_codes(mock_req)
-                  object_id_mock.assert_called_with(mock_query['id'])
-                  validate_mock.assert_called_with(mock_ctx, endpoint_cache_validator)
+                  validate_object_id_mock.assert_called_with(mock_query['id'])
+                  validate_schema_mock.assert_called_with(mock_ctx, endpoint_cache_validator)
                   add_status_codes_mock.assert_called_with(mock_ctx['response_codes'], mock_query['id'], {})
 
                   mock_query = pydash.merge(mock_query, {'action': 'remove'})
@@ -104,7 +104,7 @@ class TestEndpointCacherController:
                   
   @pytest.mark.asyncio
   async def test_delete_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_redis_mock:
         with patch.object(EndpointCacher, 'delete') as remove_mock:
           with patch.object(Error, 'handle') as handle_mock:
@@ -117,7 +117,7 @@ class TestEndpointCacherController:
             await delete_handler(mock_req)
             remove_mock.assert_called()
             get_redis_mock.assert_called_with(mock_req)
-            object_id_mock.assert_called_with(mock_ctx['id'])
+            validate_object_id_mock.assert_called_with(mock_ctx['id'])
             expect(remove_mock.call_args[0][0]).to(equal(mock_ctx['id']))
             
             mock_err = Exception()
@@ -134,7 +134,7 @@ class TestEndpointCacherController:
   
   @pytest.mark.asyncio
   async def test_get_handler(self, *args):
-    with patch.object(Validate, 'object_id') as object_id_mock:
+    with patch.object(Validate, 'validate_object_id') as validate_object_id_mock:
       with patch.object(DB, 'get_redis') as get_mock:
         with patch.object(EndpointCacher, 'get_all') as get_all_mock:
           with asynctest.patch.object(EndpointCacher, 'get_by_id') as get_by_id_mock:
