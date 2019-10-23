@@ -35,8 +35,9 @@ jobs:
         run: |
           cd client 
           npm ci
-          
+
       - name: Run tests
         run: |
+          cd client
           npm run test
         
