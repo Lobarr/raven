@@ -36,6 +36,11 @@ jobs:
           cd client 
           npm ci
 
+      - name: Run linter
+        run: |
+          cd client
+          make lint
+
       - name: Run tests
         run: |
           cd client
