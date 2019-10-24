@@ -176,17 +176,23 @@ async def proxy(request: web.Request, handler: web.RequestHandler):
 
     service = Regex.best_match(await Regex.get_matched_paths(request.path, DB.get(request, service_controller.table)))
     await handle_service(service, request.remote)
+
     rate_limiter_rules = await RateLimiter.get_rule_by_service_id(str(service['_id']), DB.get_redis(request))
     rate_limiter_rule = rate_limiter_rules[0] if rate_limiter_rules else None
     await handle_rate_limiter(request, str(service['_id']), rate_limiter_rule)
+
     breakers = await CircuitBreaker.get_by_service_id(str(service['_id']), DB.get(request, circuit_breaker_controller.table))
     breaker = breakers[0] if breakers else None
+
     request_validators = await RequestValidator.get_by_service_id(str(service['_id']), DB.get(request, request_validator_controller.table))
     request_validator = request_validators[0] if request_validators else None
+
     endpoint_cachers = not pydash.is_empty(service) and await EndpointCacher.get_by_service_id(str(service['_id']), DB.get_redis(request)) or None
     endpoint_cacher = endpoint_cachers[0] if endpoint_cachers else None
+
     await handle_request_validator(request_validator, json.loads(await request.text()), request.method)
     req, req_cache_hit = await handle_request(request, service, endpoint_cacher)
+    
     checks = []
 
     if not pydash.is_empty(breaker) and breaker['status'] == CircuitBreakerStatus.ON.name:
