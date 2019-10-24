@@ -1,19 +1,12 @@
 import { RouteProps } from 'react-router-dom';
-
-// pages
-import { App } from 'pages/';
-import { RouteNotFound } from 'components/';
+import { Progress } from 'antd';
+import { RouteNotFound } from 'pages/';
 
 const routes: RouteProps[] = [
   {
-    path: '/',
-    exact: true,
-    component: App,
-  },
-  {
     path: '*',
-    component: RouteNotFound,
-  },
+    component: RouteNotFound
+  }
 ];
 
 export default routes;

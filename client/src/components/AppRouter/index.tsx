@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 import { BrowserRouter, Switch, Route, RouteProps } from 'react-router-dom';
+import './index.scss';
 
 type Props = {
   routes: RouteProps[];
@@ -7,12 +8,14 @@ type Props = {
 
 export default function AppRouter(props: Props): ReactElement {
   return (
-    <BrowserRouter>
-      <Switch>
-        {props.routes.map((route, index) => (
-          <Route key={index.toString()} {...route} />
-        ))}
-      </Switch>
-    </BrowserRouter>
+    <div className="appRouter">
+      <BrowserRouter>
+        <Switch>
+          {props.routes.map((route, index) => (
+            <Route key={index.toString()} {...route} />
+          ))}
+        </Switch>
+      </BrowserRouter>
+    </div>
   );
-};
+}
