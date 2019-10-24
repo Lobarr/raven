@@ -4,7 +4,6 @@
         "es6": true
     },
     "extends": [
-        "airbnb",
         "plugin:prettier/recommended"
     ],
     "globals": {
@@ -24,11 +23,5 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "import/no-unresolved": "warn",
-        "import/prefer-default-export": "warn",
-        "no-param-reassign": "warn",
-        "no-undef": "warn",
-        "react/jsx-filename-extension": "warn",
-        "react/jsx-one-expression-per-line": "off"
     }
 }
