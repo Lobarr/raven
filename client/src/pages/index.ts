@@ -1,3 +1,3 @@
-import App from 'pages/app/app';
+import App from 'pages/App';
 
 export { App };

@@ -2,7 +2,7 @@ import { RouteProps } from 'react-router-dom';
 
 // pages
 import { App } from 'pages/';
-import { NoMatch } from 'components/';
+import { RouteNotFound } from 'components/';
 
 const routes: RouteProps[] = [
   {
@@ -12,7 +12,7 @@ const routes: RouteProps[] = [
   },
   {
     path: '*',
-    component: NoMatch,
+    component: RouteNotFound,
   },
 ];
 

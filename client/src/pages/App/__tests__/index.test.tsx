@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 
-import App from 'pages/app/app';
+import App from 'pages/App';
 
 describe('App', () => {
   const makeComponent = (): ShallowWrapper => shallow(<App />);

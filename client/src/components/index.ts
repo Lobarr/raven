@@ -1,4 +1,4 @@
-import Router from 'components/router/router';
-import NoMatch from 'components/noMatch/noMatch';
+import AppRouter from 'components/AppRouter';
+import RouteNotFound from 'components/RouteNotFound';
 
-export { Router, NoMatch };
+export { AppRouter, RouteNotFound };
