@@ -1,1 +1,2 @@
 /src/*.d.ts
+/src/utils/serviceworker.ts

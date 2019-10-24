@@ -8,12 +8,12 @@ const routes: RouteProps[] = [
   {
     path: '/',
     exact: true,
-    component: App
+    component: App,
   },
   {
     path: '*',
-    component: NoMatch
-  }
+    component: NoMatch,
+  },
 ];
 
 export default routes;
