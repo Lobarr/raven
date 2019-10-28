@@ -1,13 +1,14 @@
-import { observable, action } from 'mobx';
+import { observable, action, computed } from 'mobx';
+import { DEFAULT_THEME } from 'utils/constants';
 
 export default class AppStore {
-  @observable theme = 'dark';
+  @observable theme = DEFAULT_THEME;
 
   @action setTheme(theme: string): void {
     this.theme = theme;
   }
-}
 
-export const makeAppStore = (): AppStore => {
-  return new AppStore();
-};
+  @computed get isDarkThemed(): boolean {
+    return this.theme === "dark";
+  }
+}

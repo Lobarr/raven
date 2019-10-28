@@ -1,12 +1,19 @@
 import { createContext } from 'react';
+import { createBrowserHistory } from 'history';
+import { RouterStore, syncHistoryWithStore } from 'mobx-react-router';
 import AppState from 'types/app-state';
 
-import { AppStore, makeRouterStore } from 'stores/';
+import AppStore from 'stores/app-store';
+
+const broserHistory = createBrowserHistory();
+const routerStore = new RouterStore();
+const history = syncHistoryWithStore(broserHistory, routerStore);
 
 export const initAppState: AppState = {
   stores: {
-    routerStore: makeRouterStore(),
-    appStore: new AppStore()
+    routerStore: routerStore,
+    appStore: new AppStore(),
+    history: history
   }
 };
 

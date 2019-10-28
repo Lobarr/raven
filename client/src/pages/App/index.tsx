@@ -1,15 +1,18 @@
 import React, { ReactElement } from 'react';
-import { AppRouter } from 'components/';
+import { Layout } from 'antd';
+import { AppRouter, BasePage } from 'components/';
 import AppContext, { initAppState } from 'stores/app-context';
 import routes from 'config/routes';
 import './index.scss';
 
 export default function App(): ReactElement {
   return (
-    <div className="app">
+    <Layout className="app">
       <AppContext.Provider value={initAppState}>
-        <AppRouter routes={routes} />
+        <BasePage>
+          <AppRouter routes={routes} />
+        </BasePage>
       </AppContext.Provider>
-    </div>
+    </Layout>
   );
 }
