@@ -68,7 +68,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "make lint && npm run test"
+      "pre-commit": "make lint"
     }
   },
   "jest": {
