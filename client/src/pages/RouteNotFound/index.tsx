@@ -1,4 +1,4 @@
-import React, { ReactElement, useContext, MouseEvent } from 'react';
+import React, { ReactElement, useContext } from 'react';
 import { Layout, Card, Row, Icon } from 'antd';
 import { AppContext } from 'stores/';
 import Error404 from 'assets/404.gif';

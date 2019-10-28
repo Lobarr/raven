@@ -1,9 +1,8 @@
 import React, { ReactElement } from 'react';
-import './index.scss';
-
 import { AppRouter } from 'components/';
 import AppContext, { initAppState } from 'stores/app-context';
 import routes from 'config/routes';
+import './index.scss';
 
 export default function App(): ReactElement {
   return (
