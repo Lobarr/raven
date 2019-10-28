@@ -25,24 +25,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-
       - name: Setup Node 11.x
         uses: actions/setup-node@v1
         with:
           node-version: 11.x
-        
       - name: Intall dependencies
         run: |
-          cd client 
+          cd client
           npm ci
-
       - name: Run linter
         run: |
           cd client
           make lint
-
       - name: Run tests
         run: |
           cd client
           npm run test
-        

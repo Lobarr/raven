@@ -29,7 +29,7 @@ function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
     .register(swUrl)
     .then(registration => {
-      registration.onupdatefound = () => {
+      registration.onupdatefound = (): void => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
           return;
@@ -97,7 +97,7 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
     });
 }
 
-export function register(config?: Config) {
+export function register(config?: Config): void {
   if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(
