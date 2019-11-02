@@ -1,9 +1,9 @@
-import { RouteProps } from 'react-router-dom';
-import { RouteNotFound } from 'pages/';
+import { RouteProps } from "react-router-dom";
+import { RouteNotFound } from "pages/";
 
 const routes: RouteProps[] = [
   {
-    path: '*',
+    path: "*",
     component: RouteNotFound
   }
 ];

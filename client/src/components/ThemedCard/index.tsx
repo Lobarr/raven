@@ -1,8 +1,8 @@
-import React, { ReactElement, ReactNode, useContext } from 'react';
-import { Card } from 'antd';
-import AppContext from 'stores/app-context';
-import { useObserver } from 'mobx-react';
-import { DARK_CARD_HEAD_COLOR, DARK_CARD_BODY_COLOR } from 'utils/constants';
+import React, { ReactElement, ReactNode, useContext } from "react";
+import { Card } from "antd";
+import AppContext from "stores/app-context";
+import { useObserver } from "mobx-react";
+import { DARK_CARD_HEAD_COLOR, DARK_CARD_BODY_COLOR } from "utils/constants";
 
 type Props = {
   actions?: Array<ReactNode>;
@@ -22,11 +22,11 @@ export default function ThemedCard(props: Props): ReactElement {
     <Card
       bordered={false}
       headStyle={{
-        backgroundColor: appStore.isDarkThemed ? DARK_CARD_HEAD_COLOR : '',
+        backgroundColor: appStore.isDarkThemed ? DARK_CARD_HEAD_COLOR : "",
         color: appStore.isDarkThemed ? "white" : "black"
       }}
       bodyStyle={{
-        backgroundColor: appStore.isDarkThemed ? DARK_CARD_BODY_COLOR : '',
+        backgroundColor: appStore.isDarkThemed ? DARK_CARD_BODY_COLOR : "",
       }}
       {...props}
     >

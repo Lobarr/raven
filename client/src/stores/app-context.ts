@@ -1,9 +1,9 @@
-import { createContext } from 'react';
-import { createBrowserHistory } from 'history';
-import { RouterStore, syncHistoryWithStore } from 'mobx-react-router';
-import AppState from 'types/app-state';
+import { createContext } from "react";
+import { createBrowserHistory } from "history";
+import { RouterStore, syncHistoryWithStore } from "mobx-react-router";
+import AppState from "types/appState";
 
-import AppStore from 'stores/app-store';
+import AppStore from "stores/app-store";
 
 const broserHistory = createBrowserHistory();
 const routerStore = new RouterStore();

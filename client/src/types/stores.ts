@@ -1,5 +1,5 @@
-import { RouterStore, SynchronizedHistory } from 'mobx-react-router';
-import AppStore from 'stores/app-store';
+import { RouterStore, SynchronizedHistory } from "mobx-react-router";
+import AppStore from "stores/app-store";
 
 type Stores = {
   routerStore: RouterStore;

@@ -1,10 +1,11 @@
-import { observable, action, computed } from 'mobx';
-import { DEFAULT_THEME } from 'utils/constants';
+import { observable, action, computed } from "mobx";
+import { DEFAULT_THEME } from "utils/constants";
+import { Theme } from "types/antdProps";
 
 export default class AppStore {
-  @observable theme = DEFAULT_THEME;
+  @observable theme: Theme = DEFAULT_THEME;
 
-  @action setTheme(theme: string): void {
+  @action setTheme(theme: Theme): void {
     this.theme = theme;
   }
 

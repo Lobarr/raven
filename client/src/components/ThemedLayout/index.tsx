@@ -1,8 +1,8 @@
-import React, { ReactElement, useContext } from 'react';
-import { Layout } from 'antd';
-import AppContext from 'stores/app-context';
-import { useObserver } from 'mobx-react';
-import { DARK_LAYOUT_BACKGROUND_COLOR } from 'utils/constants';
+import React, { ReactElement, useContext } from "react";
+import { Layout } from "antd";
+import AppContext from "stores/app-context";
+import { useObserver } from "mobx-react";
+import { DARK_LAYOUT_BACKGROUND_COLOR } from "utils/constants";
 
 type Props = {
   children?: ReactElement
@@ -15,8 +15,8 @@ export default function ThemedLayout(props: Props): ReactElement {
   return useObserver(() => (
     <Layout
       style={{
-        height: '100%',
-        backgroundColor: appStore.isDarkThemed ? DARK_LAYOUT_BACKGROUND_COLOR : ''
+        height: "100%",
+        backgroundColor: appStore.isDarkThemed ? DARK_LAYOUT_BACKGROUND_COLOR : ""
       }}
     >
       {props.children}

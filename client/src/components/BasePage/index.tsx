@@ -1,56 +1,36 @@
-import React, { ReactElement, useContext } from 'react';
-import { Layout, Menu, Icon } from 'antd';
-import { useObserver } from 'mobx-react'
-import AppContext from 'stores/app-context'
-import { Theme } from 'types/antd-props'
+import React, { ReactElement, useContext } from "react";
+import { Layout } from "antd";
+import { useObserver } from "mobx-react";
+import AppContext from "stores/app-context";
+import ThemedHeader from "components/ThemedHeader";
+import SideMenu from "components/SideMenu";
+import routes from "config/routes";
+import menuItems from "config/menuItems";
+import AppRouter from "components/AppRouter";
+import { BrowserRouter } from "react-router-dom";
 
-const { Item } = Menu;
-const { Sider, Header, Content } = Layout;
+const { Content } = Layout;
 
-type Props = {
-  children: ReactElement
-}
+export type Props = {
+  children?: ReactElement;
+};
 
 export default function BasePage(props: Props): ReactElement {
   const { stores } = useContext(AppContext);
   const { appStore } = stores;
-  const theme = appStore.theme as Theme;
+  const { theme } = appStore;
 
   return useObserver(() => (
-    <Layout>
-      <Header
-        style={{
-          backgroundColor: !appStore.isDarkThemed ? 'white' : ''
-        }}
-      >
-        <span
-          style={{
-            color: appStore.isDarkThemed ? 'white' : 'black',
-            fontSize: '2em',
-            fontFamily: 'Be Vietnam'
-          }}
-        >
-          Raven
-        </span>
-      </Header>
+    <BrowserRouter>
       <Layout>
-        <Sider
-          collapsible={true}
-          theme={theme}
-        >
-          <Menu
-            theme={theme}
-          >
-            <Item>
-              <Icon type="inbox" />
-              <span>testing</span>
-            </Item>
-          </Menu>
-        </Sider>
-        <Content style={{ backgroundColor: 'pink' }}>
-          {props.children}
-        </Content>
+        <ThemedHeader theme={theme} />
+        <Layout>
+          <SideMenu theme={theme} menuItems={menuItems} />
+          <Content>
+            <AppRouter routes={routes} />
+          </Content>
+        </Layout>
       </Layout>
-    </Layout>
-  ))
+    </BrowserRouter>
+  ));
 }
