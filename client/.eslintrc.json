@@ -21,7 +21,9 @@
     "sourceType": "module"
   },
   "plugins": ["react", "@typescript-eslint"],
-  "rules": {},
+  "rules": {
+    "quotes": "error"
+  },
   "settings": {
     "react": {
       "version": "detect"

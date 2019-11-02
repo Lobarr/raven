@@ -1,15 +1,18 @@
-import React, { ReactElement } from 'react';
-import { AppRouter } from 'components/';
-import AppContext, { initAppState } from 'stores/app-context';
-import routes from 'config/routes';
-import './index.scss';
+import React, { ReactElement } from "react";
+import { Layout } from "antd";
+import { BasePage } from "components/";
+import AppContext, { initAppState } from "stores/appContext";
+import "./index.scss";
+import { BrowserRouter } from "react-router-dom";
 
 export default function App(): ReactElement {
   return (
-    <div className="app">
-      <AppContext.Provider value={initAppState}>
-        <AppRouter routes={routes} />
-      </AppContext.Provider>
-    </div>
+    <BrowserRouter>
+      <Layout className="app">
+        <AppContext.Provider value={initAppState}>
+          <BasePage />
+        </AppContext.Provider>
+      </Layout>
+    </BrowserRouter>
   );
 }
