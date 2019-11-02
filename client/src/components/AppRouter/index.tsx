@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import { BrowserRouter, Switch, Route, RouteProps } from 'react-router-dom';
 import './index.scss';
 
-type Props = {
+export type Props = {
   routes: RouteProps[];
 };
 
