@@ -1,6 +1,6 @@
-import React, { ReactElement, useContext } from "react";
+import React, { ReactElement } from "react";
 import { Layout, Row, Icon } from "antd";
-import AppContext from "stores/app-context";
+import { useAppContext } from "stores/appContext";
 import Error404Light from "assets/404-light.gif";
 import Error404Dark from "assets/404-dark.gif";
 import { ThemedLayout, ThemedCard } from "components";
@@ -9,7 +9,7 @@ import { useObserver } from "mobx-react";
 const { Content } = Layout;
 
 export default function RouteNotFound(): ReactElement {
-  const { stores } = useContext(AppContext);
+  const { stores } = useAppContext();
   const { routerStore, appStore } = stores;
 
   const handleClick = (): void => {

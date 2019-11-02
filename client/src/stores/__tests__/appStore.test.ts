@@ -1,4 +1,4 @@
-import AppStore from "stores/app-store";
+import AppStore from "stores/appStore";
 import { Theme } from "types/antdProps";
 
 describe("AppStore", () => {
