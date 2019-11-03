@@ -31,3 +31,6 @@ start-celery-watch:
 
 lint-fix:
 	autopep8 --in-place --aggressive --aggressive api/**/*.py
+
+test-app:
+	make test && cd client && npm run test
