@@ -12,7 +12,7 @@ class Admin:
     @staticmethod
     async def create(ctx: dict, db):
         """
-        creates an admin  
+        creates an admin
 
         @param ctx: (object) context of admin
         @param db: mongo instance
@@ -26,7 +26,7 @@ class Admin:
         updates an admin
 
         @param id: (str) id of admin to update
-        @param ctx: (object) 
+        @param ctx: (object)
         """
         if 'password' in ctx:
             ctx['password'] = Hasher.hash(ctx['password'])

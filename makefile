@@ -28,3 +28,6 @@ start-celery-beat:
 
 start-celery-watch:
 	nodemon -L --watch api/util/tasks.py --exec "make start-celery"
+
+lint-fix:
+	autopep8 --in-place --aggressive --aggressive api/**/*.py

@@ -33,14 +33,17 @@ async def get_handler(request: web.Request):
         else:
             admins = []
             if 'id' in request.rel_url.query:
-                Validate.validate_object_id(request.rel_url.query.get('id'))
-                admin = await Admin.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
+                admin_id = request.rel_url.query.get('id')
+                Validate.validate_object_id(admin_id)
+                admin = await Admin.get_by_id(admin_id, DB.get(request, table))
                 if admin is not None:
                     admins.append(admin)
             elif 'email' in request.rel_url.query:
-                admins = await Admin.get_by_email(request.rel_url.query.get('email'), DB.get(request, table))
+                admin_email = request.rel_url.query.get('email')
+                admins = await Admin.get_by_email(admin_email, DB.get(request, table))
             elif 'username' in request.rel_url.query:
-                admins = await Admin.get_by_username(request.rel_url.query.get('username'), DB.get(request, table))
+                admin_username = request.rel_url.query.get('username')
+                admins = await Admin.get_by_username(admin_username, DB.get(request, table))
         return web.json_response({
             'data': DB.format_documents(Bson.to_json(admins)),
             'status_code': 200

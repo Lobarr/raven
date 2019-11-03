@@ -17,7 +17,7 @@ class CircuitBreaker:
         """
         creates a circuit breaker
 
-        @param ctx: (object) context to create 
+        @param ctx: (object) context to create
         @param circuit_breaker_db: mongo instance
         @param service_db: mongo instance
         """
@@ -113,7 +113,7 @@ class CircuitBreaker:
     @staticmethod
     async def check_exists(circuit_breaker_id: str, db: AsyncIOMotorCollection):
         """
-        checks if circuit breaker exists 
+        checks if circuit breaker exists
 
         @param circuit_breaker_id: (str) id of circuit breaker
         @param db: mongo instance
@@ -162,17 +162,17 @@ class CircuitBreaker:
     @staticmethod
     async def get_count(_id: str, db: AioRedis):
         """
-        gets count 
+        gets count
 
         @param id: (str) id of circuit breaker
-        @param db: redis instance 
+        @param db: redis instance
         """
         return await db.get(CircuitBreaker.count_key(_id), encoding='utf-8')
 
     @staticmethod
     async def set_count(_id: str, count: int, timeout: int, db: AioRedis):
         """
-        sets count 
+        sets count
 
         @param id: (str) id of circuit breaker
         @param count: (int) number to set
@@ -197,9 +197,9 @@ class CircuitBreaker:
     @staticmethod
     async def get_queued(_id: str, db: AioRedis):
         """
-        gets queued 
+        gets queued
 
         @param id: (str) id of circuit breaker
-        @param db: redis instance 
+        @param db: redis instance
         """
         return await db.get(CircuitBreaker.queued_key(_id), encoding='utf-8')

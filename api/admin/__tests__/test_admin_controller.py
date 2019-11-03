@@ -126,8 +126,10 @@ class TestAdminController:
                                         get_by_id_mock.return_value = {}
                                         await get_handler(mock_req)
                                         get_by_id_mock.assert_called()
-                                        expect(get_by_id_mock.call_args[0][0]).to(
-                                            equal(mock_query['id']))
+                                        expect(
+                                            get_by_id_mock.call_args[0][0]).to(
+                                            equal(
+                                                mock_query['id']))
                                         get_mock.assert_called()
 
                                         mock_query = {
@@ -136,8 +138,10 @@ class TestAdminController:
                                         mock_req.rel_url.query = mock_query
                                         await get_handler(mock_req)
                                         get_by_email_mock.assert_called()
-                                        expect(get_by_email_mock.call_args[0][0]).to(
-                                            equal(mock_query['email']))
+                                        expect(
+                                            get_by_email_mock.call_args[0][0]).to(
+                                            equal(
+                                                mock_query['email']))
                                         get_mock.assert_called()
 
                                         mock_query = {
@@ -146,6 +150,8 @@ class TestAdminController:
                                         mock_req.rel_url.query = mock_query
                                         await get_handler(mock_req)
                                         get_by_username_mock.assert_called()
-                                        expect(get_by_username_mock.call_args[0][0]).to(
-                                            equal(mock_query['username']))
+                                        expect(
+                                            get_by_username_mock.call_args[0][0]).to(
+                                            equal(
+                                                mock_query['username']))
                                         get_mock.assert_called()
