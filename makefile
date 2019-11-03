@@ -15,10 +15,10 @@ freeze:
 	pip freeze > requirements.txt
 
 test:
-	pytest --cov-report term-missing --cov=api tests
+	python -m pytest --cov-report term-missing --cov=api api
 
 test-watch:
-	ptw --ignore ./client --ignore ./venv -v
+	nodemon --watch api -e py --exec "python -m pytest api"
 
 start-celery:
 	celery worker -A api.util.tasks --loglevel=info
@@ -28,3 +28,9 @@ start-celery-beat:
 
 start-celery-watch:
 	nodemon -L --watch api/util/tasks.py --exec "make start-celery"
+
+lint-fix:
+	autopep8 --in-place --aggressive --aggressive api/**/*.py
+
+test-app:
+	make test && cd client && npm run test
