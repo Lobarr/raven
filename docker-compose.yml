@@ -7,7 +7,7 @@ services:
     ports:
       - 27017:27017
     networks:
-    - backend
+      - backend
   cache:
     image: redis:alpine
     ports:
@@ -33,6 +33,7 @@ services:
     depends_on:
       - db
       - cache
+    env_file: .env
     environment:
       - DB=mongodb://db
       - REDIS=redis://cache
@@ -49,5 +50,6 @@ services:
       - 3000:3000
     volumes:
       - ./client:/client
+      - ./client/node_modules
     depends_on:
       - backend
