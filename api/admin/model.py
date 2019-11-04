@@ -77,7 +77,7 @@ class Admin:
         @param db: mongo instance
         """
         admin = await Admin.get_by_username(username, db)
-        match = Hasher.validate(password, admin['password'])
+        match = Hasher.validate(password, admin[0]['password'])
         return match
 
     @staticmethod

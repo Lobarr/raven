@@ -98,13 +98,14 @@ class TaskProvider(Task):
     def redis(self):
         if self._redis_instance is None:
             self._redis_instance = self.loop.run_until_complete(
-                aioredis.create_redis_instance(REDIS))
+                aioredis.create_redis(REDIS)
+            )
         return self._redis_instance
 
     @property
     def loop(self):
         if self._event_loop is None:
-            self._event_loop = asyncio.get_event_event_loop()
+            self._event_loop = asyncio.get_event_loop()
         return self._event_loop
 
 

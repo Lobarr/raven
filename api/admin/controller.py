@@ -11,6 +11,28 @@ router = web.RouteTableDef()
 table = 'admin'
 
 
+@router.post('/admin/login')
+async def login_handler(request: web.Request):
+    try:
+        ctx = json.loads(await request.text())
+        verified = await Admin.verify_password(
+            ctx['username'], ctx['password'],
+            DB.get(request, table)
+        )
+        if verified:
+            admin = await Admin.get_by_username(
+                ctx['username'], DB.get(request, table))
+            return web.json_response({
+                'data': Bson.to_json(admin)
+            })
+        else:
+            return web.json_response({
+                'status': 'Unauthorized'
+            }, status=401)
+    except Exception as err:
+        return Error.handle((err))
+
+
 @router.post('/admin')
 async def post_handler(request: web.Request):
     try:
