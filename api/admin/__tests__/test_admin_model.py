@@ -116,7 +116,7 @@ class TestAdmin:
                 mock_admin = {
                     'password': 'some-value'
                 }
-                get_by_username_mock.return_value = mock_admin
+                get_by_username_mock.return_value = [mock_admin]
                 await Admin.verify_password(mock_username, mock_password, mock_db)
                 get_by_username_mock.assert_awaited_with(
                     mock_username, mock_db)
