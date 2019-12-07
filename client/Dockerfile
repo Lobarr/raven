@@ -1,9 +1,9 @@
 FROM node:12-alpine
 
-COPY . /client
 WORKDIR /client
 
-RUN npm ci
+COPY package.json /client/package.json
+RUN npm install
 
 CMD [ "npm", "start" ]
 
