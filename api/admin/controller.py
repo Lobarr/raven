@@ -19,16 +19,16 @@ async def login_handler(request: web.Request):
             ctx['username'], ctx['password'],
             DB.get(request, table)
         )
-        if verified:
-            admin = await Admin.get_by_username(
-                ctx['username'], DB.get(request, table))
-            return web.json_response({
-                'data': Bson.to_json(admin)
+        if not verified:
+            raise Exception({
+                'message': 'Unathorized',
+                'status_code': 401
             })
-        else:
-            return web.json_response({
-                'status': 'Unauthorized'
-            }, status=401)
+        admin = await Admin.get_by_username(
+            ctx['username'], DB.get(request, table))
+        return web.json_response({
+            'data': Bson.to_json(admin)
+        })
     except Exception as err:
         return Error.handle((err))
 
