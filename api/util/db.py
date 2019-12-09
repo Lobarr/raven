@@ -27,7 +27,7 @@ class DB:
     @staticmethod
     def format_document(document: object) -> object:
         """
-        formats redis document
+        formats mongo document
 
         @param document: (object) document to format
         """
