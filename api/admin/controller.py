@@ -5,7 +5,7 @@ from bson import json_util
 from aiohttp import web
 from .model import Admin
 from .schema import admin_validator
-from api.util import Error, Bson, DB, Validate
+from api.util import Error, Bson, DB, Validate, Token
 
 router = web.RouteTableDef()
 table = 'admin'
@@ -24,10 +24,9 @@ async def login_handler(request: web.Request):
                 'message': 'Unathorized',
                 'status_code': 401
             })
-        admin = await Admin.get_by_username(
-            ctx['username'], DB.get(request, table))
+        admin = await Admin.get_by_username(ctx['username'], DB.get(request, table))
         return web.json_response({
-            'data': Bson.to_json(admin)
+            'data': DB.format_document(Bson.to_json(admin))
         })
     except Exception as err:
         return Error.handle((err))
