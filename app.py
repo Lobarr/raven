@@ -9,29 +9,46 @@ from api.admin import admin_router, Admin
 from api.request_validator import request_validator_router
 from api.insights import insights_router
 from api.ping import ping_router
-import os
-import asyncio
-import aioredis
 from celery import Celery
 from motor.motor_asyncio import AsyncIOMotorClient
-import logging
 import aiohttp_cors
 from aiohttp import web
 from dotenv import load_dotenv
 
+import logging
+import os
+import asyncio
+import aioredis
+
+
+
 load_dotenv()
 
+async def init_db_conns():
+    mongo = AsyncIOMotorClient(DB).raven
+    redis = await aioredis.create_redis(REDIS)
+    return {
+        'mongo': mongo,
+        'redis': redis
+    }
 
-async def init():
+def attach_db_conns_to_app(app: web.Application, db_conns: dict):
+    for db_name, db_conn in db_conns.items():
+        app[db_name] = db_conn
+
+def init_cors(app: web.Application):
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+    })
+    for route in list(app.router.routes()):
+        cors.add(route)
+
+def attach_routes_to_app(app: web.Application):
     is_prod = os.getenv("ENV") is "prod"
-    app = web.Application(middlewares=[proxy])
-    raven = web.Application()
-    app['mongo'] = AsyncIOMotorClient(DB).raven
-    app['redis'] = await aioredis.create_redis(REDIS)
-    raven['mongo'] = app['mongo']
-    raven['redis'] = app['redis']
-
-    # routes
     routers = [
         admin_router,
         circuit_breaker_router,
@@ -45,21 +62,21 @@ async def init():
     ]
 
     for router in routers:
-        raven.add_routes(router)
+        app.add_routes(router)
+    
+    is_prod and app.add_routes([web.static('/dashboard', './client/dist')])
 
-    is_prod and raven.add_routes([web.static('/dashboard', './client/dist')])
+
+async def init():
+    app = web.Application(middlewares=[proxy])
+    raven = web.Application()
+    db_conns = await init_db_conns()
+
+    attach_db_conns_to_app(app, db_conns)
+    attach_db_conns_to_app(raven, db_conns)
+    attach_routes_to_app(raven)
     app.add_subapp('/raven', raven)
-    # cors
-    cors = aiohttp_cors.setup(app, defaults={
-        "*": aiohttp_cors.ResourceOptions(
-            allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
-        )
-    })
-    for route in list(app.router.routes()):
-        cors.add(route)
-
+    init_cors(app)
     await Admin.create_default(app['mongo']['admin'])
 
     return app
