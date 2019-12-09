@@ -19,6 +19,10 @@ export default class Api {
     return sessionStorage.getItem(API_TOKEN_KEY);
   }
 
+  static isAuthenticated(): boolean {
+    return Api.getToken() !== null;
+  }
+
   static async makeRequest(payload: ApiRequestContext) {
     return axios({
       baseURL: process.env.NODE_ENV === "production" ? process.env.REACT_APP_API : DEV_API_ENDPOINT,
