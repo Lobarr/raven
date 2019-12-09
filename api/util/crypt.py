@@ -50,10 +50,12 @@ class Crypt:
             password=None,
             backend=default_backend()
         )
-        return Bytes.encode_bytes(
-            private_key_bytes.sign(
-                Bytes.object_to_bytes(message), ec.ECDSA(
-                    hashes.SHA256()))).decode('utf-8')
+        message_bytes = Bytes.object_to_bytes(message)
+        signature_bytes = private_key_bytes.sign(
+            message_bytes, 
+            ec.ECDSA(hashes.SHA256())
+        )
+        return Bytes.encode_bytes(signature_bytes).decode('utf-8')
 
     @staticmethod
     def verify(message: object, signature: str, public_key: str) -> bool:
@@ -69,12 +71,13 @@ class Crypt:
                 public_key.encode('utf-8'),
                 backend=default_backend()
             )
+            signature_bytes = Bytes.decode_bytes(signature.encode('utf-8'))
+            message_bytes = Bytes.object_to_bytes(message)
             public_key_bytes.verify(
-                Bytes.decode_bytes(
-                    signature.encode('utf-8')),
-                Bytes.object_to_bytes(message),
-                ec.ECDSA(
-                    hashes.SHA256()))
+                signature_bytes,
+                message_bytes,
+                ec.ECDSA(hashes.SHA256())
+            )
             return True
         except InvalidSignature:
             return False
@@ -115,12 +118,10 @@ class Crypt:
             modes.GCM(iv),
             backend=default_backend()
         ).encryptor()
-        ciphertext = encryptor.update(Crypt._pad_data(
-            json.dumps(message))) + encryptor.finalize()
-        return Bytes.encode_bytes(
-            point +
-            encryptor.tag +
-            ciphertext).decode('utf-8')
+        padded_message = Crypt._pad_data(json.dumps(message))
+        ciphertext = encryptor.update(padded_message) + encryptor.finalize()
+        complete_ciphertext = point + encryptor.tag + ciphertext
+        return Bytes.encode_bytes(complete_ciphertext).decode('utf-8')
 
     @staticmethod
     def decrypt(message: str, receiver_private_key: str) -> str:
@@ -140,10 +141,14 @@ class Crypt:
             backend=default_backend()
         )
         sender_public_numbers = ec.EllipticCurvePublicNumbers.from_encoded_point(
-            ec.SECP256K1(), point)
+            ec.SECP256K1(), 
+            point
+        )
         sender_public_key = sender_public_numbers.public_key(default_backend())
         shared_key = receiver_private_key_bytes.exchange(
-            ec.ECDH(), sender_public_key)
+            ec.ECDH(), 
+            sender_public_key
+        )
         iv = '000000000000'.encode('utf-8')
         xkdf = x963kdf.X963KDF(
             algorithm=hashes.SHA256(),
