@@ -59,6 +59,7 @@
     "eslint-plugin-react-hooks": "^1.7.0",
     "husky": "^3.1.0",
     "jest": "^24.9.0",
+    "jest-localstorage-mock": "^2.4.0",
     "module-alias": "^2.2.2",
     "node-sass": "^4.13.0",
     "prettier": "^1.19.1"
