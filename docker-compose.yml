@@ -1,19 +1,13 @@
 version: "3"
-networks:
-  backend:
 services:
   db:
     image: mvertes/alpine-mongo
     ports:
       - 27017:27017
-    networks:
-      - backend
   cache:
     image: redis:alpine
     ports:
       - 6379:6379
-    networks:
-      - backend
   celery:
     build: .
     command: bash -c "make start-celery-beat & sleep 1 && make start-celery-watch"
@@ -25,8 +19,6 @@ services:
     depends_on:
       - db
       - cache
-    networks:
-      - backend
   backend:
     build:
       context: .
@@ -42,8 +34,6 @@ services:
       - .:/raven
     ports:
       - 3001:3001
-    networks:
-      - backend
   frontend:
     build: ./client
     ports:
