@@ -25,8 +25,9 @@ async def login_handler(request: web.Request):
                 'status_code': 401
             })
         admin = await Admin.get_by_username(ctx['username'], DB.get(request, table))
+        sanitized_admin = pydash.omit(admin, 'password')
         return web.json_response({
-            'data': DB.format_document(Bson.to_json(admin))
+            'data': DB.format_document(Bson.to_json(sanitized_admin))
         })
     except Exception as err:
         return Error.handle((err))
