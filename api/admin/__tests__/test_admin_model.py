@@ -1,12 +1,13 @@
 import pytest
 import asyncio
+import bson
 import mock
 import asynctest
 from mock import patch, MagicMock
 from asynctest import CoroutineMock
-from expects import expect, equal, raise_error, be_an, have_keys
+from expects import expect, equal, raise_error, be_an, have_keys, be_true
 from api.admin import Admin, admin_validator
-from api.util import Validate, Crypt, Hasher
+from api.util import Validate, Crypt, Hasher, Token
 
 
 class TestAdmin:
@@ -83,46 +84,71 @@ class TestAdmin:
     async def test_get_by_email(self, *args):
         mock_email = 'some-value'
         mock_db = CoroutineMock()
-        mock_cursor = MagicMock()
-        mock_cursor.to_list = CoroutineMock()
-        mock_db.find = MagicMock()
-        mock_db.find.return_value = mock_cursor
-        await Admin.get_by_email(mock_email, mock_db)
-        mock_db.find.assert_called()
-        mock_db.find.assert_called_with({'email': mock_email})
-        mock_cursor.to_list.assert_called()
+        mock_admin = {}
+        mock_db.find_one = CoroutineMock()
+        mock_db.find_one.return_value = mock_admin
+        admin =  await Admin.get_by_email(mock_email, mock_db)
+        mock_db.find_one.assert_called()
+        mock_db.find_one.assert_called_with({'email': mock_email})
+        expect(admin).to(equal(mock_admin))
 
     @pytest.mark.asyncio
     async def test_get_by_username(self, *args):
         mock_username = 'some-value'
         mock_db = CoroutineMock()
-        mock_cursor = MagicMock()
-        mock_cursor.to_list = CoroutineMock()
-        mock_db.find = MagicMock()
-        mock_db.find.return_value = mock_cursor
-        await Admin.get_by_username(mock_username, mock_db)
-        mock_db.find.assert_called()
-        mock_db.find.assert_called_with({'username': mock_username})
-        mock_cursor.to_list.assert_called()
+        mock_admin = {}
+        mock_db.find_one = CoroutineMock()
+        mock_db.find_one.return_value = mock_admin
+        admin = await Admin.get_by_username(mock_username, mock_db)
+        mock_db.find_one.assert_called()
+        mock_db.find_one.assert_called_with({'username': mock_username})
+        expect(admin).to(equal(mock_admin))
 
     @pytest.mark.asyncio
     async def test_verify_password(self, *args):
         with asynctest.patch.object(Admin, 'get_by_username') as get_by_username_mock:
-            with patch.object(Hasher, 'validate') as validate_mock:
-                mock_username = 'some-value'
-                mock_password = 'some-value'
-                mock_db = MagicMock()
-                mock_db.find = CoroutineMock()
-                mock_admin = {
-                    'password': 'some-value'
+            with asynctest.patch.object(Admin, 'generate_token') as generate_token_mock:
+                with patch.object(Hasher, 'validate') as validate_mock:
+                    mock_username = 'some-value'
+                    mock_password = 'some-value'
+                    mock_db = MagicMock()
+                    mock_db.find = CoroutineMock()
+                    mock_admin = {
+                        'password': 'some-value',
+                        '_id': bson.ObjectId()
+                    }
+                    get_by_username_mock.return_value = mock_admin
+                    validate_mock.return_value = True
+                    
+                    verified = await Admin.verify_password(mock_username, mock_password, mock_db)
+                    
+                    get_by_username_mock.assert_awaited_with(
+                        mock_username, 
+                        mock_db
+                    )
+                    expect(validate_mock.call_args[0][0]).to(equal(mock_password))
+                    expect(validate_mock.call_args[0][1]).to(
+                        equal(mock_admin['password'])
+                    )
+                    generate_token_mock.assert_called()
+                    expect(verified).to(be_true)
+    
+    @pytest.mark.asyncio
+    async def test_generate_token(self, *args):
+        with asynctest.patch.object(Admin, 'update') as update_mock:
+            with asynctest.patch.object(Token, 'generate') as generate_mock:
+                mock_db = {}
+                mock_token = 'some-token'
+                mock_payload = {
+                    '_id': 'some-id',
+                    'username': 'some-username'
                 }
-                get_by_username_mock.return_value = mock_admin
-                await Admin.verify_password(mock_username, mock_password, mock_db)
-                get_by_username_mock.assert_awaited_with(
-                    mock_username, mock_db)
-                expect(validate_mock.call_args[0][0]).to(equal(mock_password))
-                expect(validate_mock.call_args[0][1]).to(
-                    equal(mock_admin['password']))
+                generate_mock.return_value = mock_token
+
+                await Admin.generate_token(mock_payload, mock_db)
+
+                expect(generate_mock.call_args[0][0]).to(have_keys('_id', 'username', 'timestamp'))
+                update_mock.assert_called()
 
     @pytest.mark.asyncio
     async def test_count(self, *args):

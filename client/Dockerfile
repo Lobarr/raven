@@ -1,8 +1,8 @@
-FROM node:10-alpine
+FROM node:12-alpine
 
-COPY . /client
 WORKDIR /client
 
+COPY package.json /client/package.json
 RUN npm install
 
 CMD [ "npm", "start" ]

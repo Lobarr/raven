@@ -1,6 +1,7 @@
-venv/
+venv
 .vscode
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
-client/node_modules/
+node_modules
+.github

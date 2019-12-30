@@ -16,6 +16,7 @@ class Hasher:
         digest.update(Bytes.str_to_bytes(ctx))
         return Bytes.encode_bytes(digest.finalize()).decode('utf-8')
 
+    @staticmethod
     def hash(ctx: str) -> str:
         """
         hashes ctx
@@ -24,7 +25,8 @@ class Hasher:
         """
         return bcrypt.hashpw(
             ctx.encode('utf-8'),
-            bcrypt.gensalt(12)).decode('utf-8')
+            bcrypt.gensalt(12)
+        ).decode('utf-8')
 
     @staticmethod
     def validate(ctx: str, hash: str) -> bool:

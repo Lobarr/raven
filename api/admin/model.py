@@ -1,8 +1,10 @@
 import bson
-from motor.motor_asyncio import AsyncIOMotorClient
+import pydash
+import time
 
+from motor.motor_asyncio import AsyncIOMotorClient
 from api.admin.schema import admin_schema, admin_validator
-from api.util import Hasher
+from api.util import Hasher, Token, DB, Bson
 from api.util.env import RAVEN_ADMIN_PASS, RAVEN_ADMIN_USER
 
 collection_name = 'admin'
@@ -52,8 +54,7 @@ class Admin:
         @param email: email of admin
         @param db: mongo instance
         """
-        res = db.find({'email': email})
-        return await res.to_list(100)
+        return await db.find_one({'email': email})
 
     @staticmethod
     async def get_by_username(username: str, db):
@@ -64,8 +65,20 @@ class Admin:
         @param username: username of admin
         @param db: mongo instance
         """
-        res = db.find({'username': username})
-        return await res.to_list(100)
+        return await db.find_one({'username': username})
+
+    @staticmethod
+    async def generate_token(payload: dict, db):
+        sanitized_payload = pydash.merge(
+            pydash.omit(payload, 'password', 'token'),
+            {'timestamp': repr(time.time())}
+        )
+        token = Token.generate(sanitized_payload)
+        update_ctx = {
+            'token': token
+        }
+        await Admin.update(payload['_id'], update_ctx, db)
+        
 
     @staticmethod
     async def verify_password(username: str, password: str, db):
@@ -76,8 +89,19 @@ class Admin:
         @param password: (str) password to check
         @param db: mongo instance
         """
+        match = False
         admin = await Admin.get_by_username(username, db)
+
+        if not admin:
+            raise Exception({
+                'message': 'Admin does not exist',
+                'status_code': 401
+            })
+
         match = Hasher.validate(password, admin['password'])
+        if match:
+            formatted_admin = DB.format_document(Bson.to_json(admin))
+            await Admin.generate_token(formatted_admin, db)
         return match
 
     @staticmethod

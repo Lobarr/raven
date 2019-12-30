@@ -14,7 +14,6 @@ export default function RouteNotFound(): ReactElement {
 
   const handleClick = (): void => {
     routerStore.push("/");
-    // appStore.isDarkThemed ? appStore.setTheme("light") : appStore.setTheme("dark");
   };
 
   return useObserver(() => (

@@ -5,10 +5,32 @@ from bson import json_util
 from aiohttp import web
 from .model import Admin
 from .schema import admin_validator
-from api.util import Error, Bson, DB, Validate
+from api.util import Error, Bson, DB, Validate, Token
 
 router = web.RouteTableDef()
 table = 'admin'
+
+
+@router.post('/admin/login')
+async def login_handler(request: web.Request):
+    try:
+        ctx = json.loads(await request.text())
+        verified = await Admin.verify_password(
+            ctx['username'], ctx['password'],
+            DB.get(request, table)
+        )
+        if not verified:
+            raise Exception({
+                'message': 'Unathorized',
+                'status_code': 401
+            })
+        admin = await Admin.get_by_username(ctx['username'], DB.get(request, table))
+        sanitized_admin = pydash.omit(admin, 'password')
+        return web.json_response({
+            'data': DB.format_document(Bson.to_json(sanitized_admin))
+        })
+    except Exception as err:
+        return Error.handle((err))
 
 
 @router.post('/admin')
