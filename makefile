@@ -9,6 +9,7 @@ start-client:
 	cd client && npm start
 
 start-app:
+	@make clean-celery
 	docker-compose kill && docker-compose up --build --remove-orphans
 
 freeze: 
@@ -28,6 +29,9 @@ start-celery-beat:
 
 start-celery-watch:
 	nodemon -L --watch api/util/tasks.py --exec "make start-celery"
+
+clean-celery:
+	rm -f celerybeat*
 
 lint-fix:
 	autopep8 --in-place --aggressive --aggressive api/**/*.py

@@ -12,9 +12,12 @@ export const publicRoutes: RouteProps[] = [
     component: RouteNotFound
   }
 ];
+
+
 export const privateRoutes: RouteProps[] = [
   {
-    path: "donno",
+    path: "/donno",
+    exact: true,
     component: RouteNotFound
   }
 ];

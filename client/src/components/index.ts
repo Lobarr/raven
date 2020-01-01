@@ -4,6 +4,7 @@ import ThemedLayout from "components/ThemedLayout";
 import ThemedCard from "components/ThemedCard";
 import ThemedHeader from "components/ThemedHeader";
 import SideMenu from "components/SideMenu";
+import PrivateRoute from "components/PrivateRoute";
 
 export {
   AppRouter,
@@ -11,5 +12,6 @@ export {
   ThemedLayout,
   ThemedCard,
   ThemedHeader,
-  SideMenu
+  SideMenu,
+  PrivateRoute
 };
