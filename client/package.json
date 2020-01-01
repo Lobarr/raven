@@ -80,5 +80,6 @@
   },
   "_moduleAliases": {
     "@root": "./src"
-  }
+  },
+  "proxy": "http://localhost:3001"
 }

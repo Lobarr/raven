@@ -11,7 +11,15 @@ export default class AppStore {
     this.theme = theme;
   }
 
+  @action setAdmin(admin: Admin): void {
+    this.admin = admin
+  }
+
   @computed get isDarkThemed(): boolean {
     return this.theme === "dark";
+  }
+
+  @computed get isLoggedIn() : boolean {
+    return this.admin !== undefined;
   }
 }

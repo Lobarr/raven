@@ -23,7 +23,8 @@ describe("Approuter", () => {
       }
     ];
     const wrapper = makeComponent({
-      routes: expectedRoutes
+      publicRoutes: expectedRoutes,
+      privateRoutes: []
     });
     const renderedRoutes = wrapper.find(Route);
 
@@ -34,7 +35,7 @@ describe("Approuter", () => {
   });
 
   it("should use switch router", () => {
-    const wrapper = makeComponent({ routes: [] });
+    const wrapper = makeComponent({ publicRoutes: [], privateRoutes: [] });
     expect(wrapper.find(Switch)).toHaveLength(1);
   });
 });
