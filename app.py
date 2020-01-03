@@ -1,6 +1,6 @@
 from api.service import service_router
 from api.util.env import DB, REDIS
-from api.util import auth_middleware
+from api.util.auth_middleware import auth_middleware
 from api.proxy import proxy
 from api.endpoint_cacher import endpoint_cacher_router
 from api.circuit_breaker import circuit_breaker_router

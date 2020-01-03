@@ -9,4 +9,3 @@ from .crypt import Crypt
 from .promise import Async
 from .api import Api
 from .regex import Regex
-from .auth_middleware import auth_middleware
