@@ -52,7 +52,7 @@ class Crypt:
         )
         message_bytes = Bytes.object_to_bytes(message)
         signature_bytes = private_key_bytes.sign(
-            message_bytes, 
+            message_bytes,
             ec.ECDSA(hashes.SHA256())
         )
         return Bytes.encode_bytes(signature_bytes).decode('utf-8')
@@ -141,12 +141,10 @@ class Crypt:
             backend=default_backend()
         )
         sender_public_numbers = ec.EllipticCurvePublicNumbers.from_encoded_point(
-            ec.SECP256K1(), 
-            point
-        )
+            ec.SECP256K1(), point)
         sender_public_key = sender_public_numbers.public_key(default_backend())
         shared_key = receiver_private_key_bytes.exchange(
-            ec.ECDH(), 
+            ec.ECDH(),
             sender_public_key
         )
         iv = '000000000000'.encode('utf-8')

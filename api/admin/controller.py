@@ -30,7 +30,7 @@ async def login_handler(request: web.Request):
             'data': DB.format_document(Bson.to_json(sanitized_admin))
         })
     except Exception as err:
-        return Error.handle((err))
+        return Error.handle(err)
 
 
 @router.post('/admin')

@@ -78,7 +78,6 @@ class Admin:
             'token': token
         }
         await Admin.update(payload['_id'], update_ctx, db)
-        
 
     @staticmethod
     async def verify_password(username: str, password: str, db):

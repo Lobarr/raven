@@ -1,5 +1,6 @@
 from api.service import service_router
 from api.util.env import DB, REDIS
+from api.util import auth_middleware
 from api.proxy import proxy
 from api.endpoint_cacher import endpoint_cacher_router
 from api.circuit_breaker import circuit_breaker_router
@@ -11,14 +12,14 @@ from api.insights import insights_router
 from api.ping import ping_router
 from celery import Celery
 from motor.motor_asyncio import AsyncIOMotorClient
-import aiohttp_cors
 from aiohttp import web
 from dotenv import load_dotenv
 
+import aiohttp_cors
+import aioredis
+import asyncio
 import logging
 import os
-import asyncio
-import aioredis
 
 
 
@@ -69,7 +70,7 @@ def attach_routes_to_app(app: web.Application):
 
 async def init():
     app = web.Application(middlewares=[proxy])
-    raven = web.Application()
+    raven = web.Application(middlewares=[auth_middleware])
     db_conns = await init_db_conns()
 
     attach_db_conns_to_app(app, db_conns)
