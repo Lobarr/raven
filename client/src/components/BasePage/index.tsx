@@ -4,7 +4,7 @@ import { useObserver } from "mobx-react";
 import { useAppContext } from "stores/appContext";
 import ThemedHeader from "components/ThemedHeader";
 import SideMenu from "components/SideMenu";
-import routes from "config/routes";
+import { publicRoutes, privateRoutes } from "config/routes";
 import menuItems from "config/menuItems";
 import AppRouter from "components/AppRouter";
 
@@ -21,7 +21,7 @@ export default function BasePage(): ReactElement {
       <Layout>
         <SideMenu theme={theme} menuItems={menuItems} />
         <Content>
-          <AppRouter routes={routes} />
+          <AppRouter publicRoutes={publicRoutes} privateRoutes={privateRoutes} />
         </Content>
       </Layout>
     </Layout>

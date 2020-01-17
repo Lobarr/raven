@@ -1,14 +1,14 @@
 import React from "react";
 import { shallow, ShallowWrapper } from "enzyme";
-import BasePage, { Props } from "components/BasePage";
+import BasePage from "components/BasePage";
 import { Layout } from "antd";
 import ThemedHeader from "components/ThemedHeader";
 import SideMenu from "components/SideMenu";
 const { Content } = Layout;
 
 describe("BasePage", () => {
-  const makeComponent = (props?: Props): ShallowWrapper => {
-    return shallow(<BasePage {...props} />);
+  const makeComponent = (): ShallowWrapper => {
+    return shallow(<BasePage />);
   };
 
   it("should render base page", () => {

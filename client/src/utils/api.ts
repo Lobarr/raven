@@ -7,7 +7,7 @@ export type ApiRequestContext = {
   params?: object;
 }
 
-export const DEV_API_ENDPOINT = "http://localhost:3001"
+export const DEV_API_ENDPOINT = "http://localhost:3001/raven"
 export const API_TOKEN_KEY = "raven";
 
 export default class Api {
