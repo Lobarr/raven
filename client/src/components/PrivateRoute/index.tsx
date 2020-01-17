@@ -13,7 +13,7 @@ export default function PrivateRoute({ component: Component, ...otherProps }: Ro
     <Route
       {...otherProps}
       render={(props) => (
-        appStore.isLoggedIn === true 
+        appStore.isLoggedIn === true
         ? <Component {...props} />
         : <Redirect to={{ pathname: "/login" }} />
       )}

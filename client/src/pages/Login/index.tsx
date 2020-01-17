@@ -73,7 +73,7 @@ function _Login(props: FormComponentProps): ReactElement {
                   />,
                 )}
               </Item>
-              <Item> 
+              <Item>
                   {getFieldDecorator("password", {
                     rules: [{ required: true, message: "Please input your Password!" }],
                   })(
