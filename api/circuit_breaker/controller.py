@@ -1,24 +1,31 @@
 import json
 import multidict
 import pydash
+
+from copy import deepcopy
+from typing import Optional, Union, List
 from bson import json_util
 from aiohttp import web
-from .model import CircuitBreaker
-from .schema import circuit_breaker_validator
+from api.circuit_breaker.service import CircuitBreaker
+from api.circuit_breaker.schema import CircuitBreakerDTO
 from api.util import Error, Bson, DB, Validate
 from api.service import controller
 
 
 router = web.RouteTableDef()
-table = 'circuit_breaker'
 
 
 @router.post('/circuit_breaker')
 async def post_handler(request: web.Request):
     try:
+        db_provider = deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
-        Validate.validate_schema(ctx, circuit_breaker_validator)
-        await CircuitBreaker.create(circuit_breaker_validator.normalized(ctx), DB.get(request, table), DB.get(request, controller.table))
+        circuit_breaker = CircuitBreaker.make_dto(ctx, normalize=True)
+
+        await db_provider.start_mongo_transaction()
+        await CircuitBreaker.create(circuit_breaker, db_provider)
+        await db_provider.end_mongo_transaction()
+
         return web.json_response({
             'message': 'Circuit breaker created',
             'status_code': 200
@@ -30,28 +37,50 @@ async def post_handler(request: web.Request):
 @router.get('/circuit_breaker')
 async def get_handler(request: web.Request):
     try:
-        circuit_breakers = None
-        if len(request.rel_url.query.keys()) == 0:
-            circuit_breakers = await CircuitBreaker.get_all(DB.get(request, table))
+        db_provider = deepcopy(DB.get_provider(request))
+        circuit_breakers: Optional[List[CircuitBreakerDTO]] = None
+        circuit_breaker: Optional[CircuitBreakerDTO] = None
+        has_prop = len(request.rel_url.query.keys()) > 0
+
+        await db_provider.start_mongo_transaction()
+
+        if not has_prop:
+
+            circuit_breakers = await CircuitBreaker.get_all(db_provider)
+
         else:
-            circuit_breakers = []
+
             if 'id' in request.rel_url.query:
                 Validate.validate_object_id(request.rel_url.query.get('id'))
-                circuit_breaker = await CircuitBreaker.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-                if circuit_breaker is not None:
-                    circuit_breakers.append(circuit_breaker)
+
+                circuit_breaker = await CircuitBreaker.get_by_id(request.rel_url.query.get('id'), db_provider)
+
             elif 'service_id' in request.rel_url.query:
-                Validate.validate_object_id(
-                    request.rel_url.query.get('service_id'))
-                circuit_breakers = await CircuitBreaker.get_by_service_id(request.rel_url.query.get('service_id'), DB.get(request, table))
+                Validate.validate_object_id(request.rel_url.query.get('service_id'))
+
+                circuit_breaker = await CircuitBreaker.get_by_service_id(request.rel_url.query.get('service_id'), db_provider)
+
             elif 'status_code' in request.rel_url.query:
-                circuit_breakers = await CircuitBreaker.get_by_status_code(int(request.rel_url.query.get('status_code')), DB.get(request, table))
+                circuit_breakers = await CircuitBreaker.get_by_status_code(int(request.rel_url.query.get('status_code')), db_provider)
+
             elif 'method' in request.rel_url.query:
-                circuit_breakers = await CircuitBreaker.get_by_method(request.rel_url.query.get('method'), DB.get(request, table))
+                circuit_breakers = await CircuitBreaker.get_by_method(request.rel_url.query.get('method'), db_provider)
+
             elif 'threshold' in request.rel_url.query:
-                circuit_breakers = await CircuitBreaker.get_by_threshold(float(request.rel_url.query.get('threshold')), DB.get(request, table))
+                circuit_breakers = await CircuitBreaker.get_by_threshold(float(request.rel_url.query.get('threshold')), db_provider)
+
+        await db_provider.end_mongo_transaction()
+
+        res: Optional[Union[dict, list]] = None
+
+        if circuit_breaker:
+            res = circuit_breaker.to_dict()
+
+        if circuit_breakers:
+            res = [circuit_breaker.to_dict() for circuit_breaker in circuit_breakers]
+
         return web.json_response({
-            'data': DB.format_documents(Bson.to_json(circuit_breakers)),
+            'data': res,
             'status_code': 200
         })
     except Exception as err:
@@ -61,11 +90,19 @@ async def get_handler(request: web.Request):
 @router.patch('/circuit_breaker')
 async def patch_handler(request: web.Request):
     try:
+        db_provider = deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
-        circuit_breaker_id = request.rel_url.query['id']
-        Validate.validate_schema(ctx, circuit_breaker_validator)
-        Validate.validate_object_id(circuit_breaker_id)
-        await CircuitBreaker.update(circuit_breaker_id, pydash.omit(ctx, 'id'), DB.get(request, table))
+        circuit_breaker = CircuitBreaker.make_dto(ctx)
+        
+
+        if not circuit_breaker.is_valid():
+            raise Exception({
+                'message': circuit_breaker.get_validation_errors(),
+                'status_code': 400
+            })
+
+        await CircuitBreaker.update(circuit_breaker, db_provider)
+        
         return web.json_response({
             'message': 'Circuit breaker updated',
         })
@@ -76,8 +113,14 @@ async def patch_handler(request: web.Request):
 @router.delete('/circuit_breaker')
 async def delete_handler(request: web.Request):
     try:
+        db_provider = deepcopy(DB.get_provider(request))
+
         Validate.validate_object_id(request.rel_url.query.get('id'))
-        await CircuitBreaker.remove(request.rel_url.query.get('id'), DB.get(request, table))
+
+        await db_provider.start_mongo_transaction()
+        await CircuitBreaker.remove(request.rel_url.query.get('id'), db_provider)
+        await db_provider.end_mongo_transaction()
+
         return web.json_response({
             'message': 'Circuit breaker deleted'
         })

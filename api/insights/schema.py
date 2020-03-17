@@ -28,7 +28,7 @@ insights_schema = {
         'type': 'integer'
     },
     'content_type': {
-        'type': 'list'
+        'type': 'string'
     },
     'elapsed_time': {
         'type': 'integer'

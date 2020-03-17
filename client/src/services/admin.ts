@@ -1,8 +1,10 @@
 import Api from "utils/api";
+import { Admin } from "types/admin";
+import { AxiosResponse } from "axios";
 
 const BASE_ENDPOINT = "/admin";
 
-export default class Admin {
+export default class AdminUtil {
   static async login(username: string, password: string) {
     return Api.makeRequest({
       endpoint: `${BASE_ENDPOINT}/login`,

@@ -14,7 +14,7 @@ endpoint_cache_service_id_index = 'endpoint_cache_service_id'
 
 class EndpointCacher:
     @staticmethod
-    async def _set_indexes(ctx: object, db: AioRedis):
+    async def _set_indexes(ctx: dict, db: AioRedis):
         """
         sets secondary indexes
 
@@ -59,7 +59,7 @@ class EndpointCacher:
         return keys
 
     @staticmethod
-    async def create(ctx: object, endpoint_cacher_db: AioRedis, service_db):
+    async def create(ctx: dict, endpoint_cacher_db: AioRedis, service_db):
         """
         creates an endpoint cache
 
@@ -202,7 +202,7 @@ class EndpointCacher:
             await db.srem(endpoint_cache['response_codes'], status_code)
 
     @staticmethod
-    async def set_cache(_hash: str, ctx: object, timeout: int, db: AioRedis):
+    async def set_cache(_hash: str, ctx: dict, timeout: int, db: AioRedis):
         """
         sets cache
 
@@ -215,7 +215,7 @@ class EndpointCacher:
         await db.expire(_hash, timeout)
 
     @staticmethod
-    async def get_cache(_hash: str, db: AioRedis) -> object:
+    async def get_cache(_hash: str, db: AioRedis) -> str:
         """
         gets cache
 

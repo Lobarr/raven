@@ -6,36 +6,34 @@ from asynctest import CoroutineMock
 from expects import expect, equal, have_keys
 from mock import patch, MagicMock
 
-from api.circuit_breaker import CircuitBreaker, circuit_breaker_validator
+from api.circuit_breaker import CircuitBreaker
 from api.util import DB, Error, Validate, Bson
-from api.circuit_breaker.controller import post_handler, get_handler, table, patch_handler, delete_handler
+from api.circuit_breaker.controller import post_handler, get_handler, patch_handler, delete_handler
 
 
 class TestCircuitBreakerController:
     @pytest.mark.asyncio
     async def test_post_handler(self, *args):
-        with patch.object(circuit_breaker_validator, 'normalized') as normalized_mock:
-            with patch.object(DB, 'get') as get_mock:
-                with patch('json.loads') as loads_mock:
-                    with patch.object(CircuitBreaker, 'create') as create_mock:
-                        with patch.object(Error, 'handle') as handle_mock:
-                            with patch.object(Validate, 'validate_schema') as validate_schema_mock:
-                                mock_req = MagicMock()
-                                mock_test = CoroutineMock()
-                                mock_req.text = mock_test
-                                loads_mock.return_value = mock_test
-                                await post_handler(mock_req)
-                                mock_req.text.assert_called()
-                                loads_mock.assert_called()
-                                validate_schema_mock.assert_called()
-                                get_mock.assert_called()
-                                create_mock.assert_called()
-                                normalized_mock.assert_called_with(mock_test)
+        with patch.object(DB, 'get') as get_mock:
+            with patch('json.loads') as loads_mock:
+                with patch.object(CircuitBreaker, 'create') as create_mock:
+                    with patch.object(Error, 'handle') as handle_mock:
+                        with patch.object(Validate, 'validate_schema') as validate_schema_mock:
+                            mock_req = MagicMock()
+                            mock_test = CoroutineMock()
+                            mock_req.text = mock_test
+                            loads_mock.return_value = mock_test
+                            await post_handler(mock_req)
+                            mock_req.text.assert_called()
+                            loads_mock.assert_called()
+                            validate_schema_mock.assert_called()
+                            get_mock.assert_called()
+                            create_mock.assert_called()
 
-                                mock_err = Exception()
-                                create_mock.side_effect = mock_err
-                                await post_handler(mock_req)
-                                handle_mock.assert_called_with(mock_err)
+                            mock_err = Exception()
+                            create_mock.side_effect = mock_err
+                            await post_handler(mock_req)
+                            handle_mock.assert_called_with(mock_err)
 
     @pytest.mark.asyncio
     async def test_patch_handler(self, *args):

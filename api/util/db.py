@@ -1,6 +1,8 @@
 import pydash
+
 from aiohttp import web
 from aioredis import Redis
+from api.providers import DBProvider
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 
@@ -25,15 +27,23 @@ class DB:
         return request.app['redis']
 
     @staticmethod
-    def format_document(document: object) -> object:
+    def get_provider(request: web.Request) -> DBProvider:
+        return request['db_provider']
+
+    @staticmethod
+    def format_document(document: dict) -> dict:
         """
         formats mongo document
 
         @param document: (object) document to format
         """
-        formatted = pydash.omit(document, '_id')
-        formatted['_id'] = document['_id']['$oid']
-        return formatted
+        if '_id' in document:
+            return pydash.merge(
+                pydash.omit(document, '_id'),
+                {'_id': document['_id']['$oid']}
+            )
+
+        return document
 
     @staticmethod
     def format_documents(documents: list) -> list:

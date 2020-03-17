@@ -19,7 +19,7 @@ def test_insights_schema():
         expect(insights_schema[prop]['type']).to(equal('string'))
 
     for prop in ['content_type']:
-        expect(insights_schema[prop]['type']).to(equal('list'))
+        expect(insights_schema[prop]['type']).to(equal('string'))
 
     for prop in ['status_code', 'elapsed_time']:
         expect(insights_schema[prop]['type']).to(equal('integer'))

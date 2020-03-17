@@ -11,7 +11,10 @@ def test_circuit_breaker_schema():
             'cooldown',
             'status_codes',
             'method',
-            'threshold'))
+            'threshold',
+        )
+    )
+
     for prop in ['_id', 'status', 'service_id', 'method']:
         expect(circuit_breaker_schema[prop]['type']).to(equal('string'))
 

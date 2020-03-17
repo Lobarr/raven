@@ -10,6 +10,7 @@ from api.admin import admin_router, Admin
 from api.request_validator import request_validator_router
 from api.insights import insights_router
 from api.ping import ping_router
+from api.providers import DBProvider
 from celery import Celery
 from motor.motor_asyncio import AsyncIOMotorClient
 from aiohttp import web
@@ -25,17 +26,10 @@ import os
 
 load_dotenv()
 
-async def init_db_conns():
-    mongo = AsyncIOMotorClient(DB).raven
-    redis = await aioredis.create_redis(REDIS)
-    return {
-        'mongo': mongo,
-        'redis': redis
-    }
-
-def attach_db_conns_to_app(app: web.Application, db_conns: dict):
-    for db_name, db_conn in db_conns.items():
-        app[db_name] = db_conn
+async def init_db_provider() -> DBProvider:
+    mongo_connection = AsyncIOMotorClient(DB).raven
+    redis_connection = await aioredis.create_redis(REDIS)
+    return DBProvider(mongo_connection, redis_connection)
 
 def init_cors(app: web.Application):
     cors = aiohttp_cors.setup(app, defaults={
@@ -45,6 +39,7 @@ def init_cors(app: web.Application):
             allow_headers="*",
         )
     })
+
     for route in list(app.router.routes()):
         cors.add(route)
 
@@ -68,17 +63,23 @@ def attach_routes_to_app(app: web.Application):
     is_prod and app.add_routes([web.static('/dashboard', './client/dist')])
 
 
-async def init():
+async def init() -> web.Application:
     app = web.Application(middlewares=[proxy])
     raven = web.Application(middlewares=[auth_middleware])
-    db_conns = await init_db_conns()
+    db_provider: DBProvider = await init_db_provider()
 
-    attach_db_conns_to_app(app, db_conns)
-    attach_db_conns_to_app(raven, db_conns)
+    app['db_provider'] = db_provider
+    app['mongo'] = db_provider._mongo_connection
+    app['redis'] = db_provider._redis_connection
+    
+    raven['db_provider'] = db_provider
+    raven['mongo'] = db_provider._mongo_connection
+    raven['redis'] = db_provider._redis_connection
+
     attach_routes_to_app(raven)
     app.add_subapp('/raven', raven)
     init_cors(app)
-    await Admin.create_default(app['mongo']['admin'])
+    await Admin.create_default(db_provider)
 
     return app
 

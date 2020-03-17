@@ -5,6 +5,7 @@ import pydash
 from celery import Celery, Task
 from celery.schedules import crontab
 from motor.motor_asyncio import AsyncIOMotorClient
+from api.providers import DBProvider
 from api.util.env import REDIS, DB
 from api.event import Event
 from api.util import Api
@@ -107,6 +108,12 @@ class TaskProvider(Task):
         if self._event_loop is None:
             self._event_loop = asyncio.get_event_loop()
         return self._event_loop
+
+    @property
+    def db_provider(self):
+        if self.db_provider is None:
+            self.db_provider = DBProvider(self.mongo, self.redis)
+        return self.db_provider
 
 
 @tasks.task(base=TaskProvider, name='raven.api.task.async')

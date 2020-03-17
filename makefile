@@ -1,6 +1,7 @@
 
 init:
 	pip install -r requirements.txt
+	npm i -g nodemon
 
 start-server:
 	nodemon -L app.py

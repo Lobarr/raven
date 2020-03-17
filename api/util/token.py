@@ -6,7 +6,7 @@ JWT_ALGORITHM = 'HS256'
 
 class Token:
     @staticmethod
-    def generate(payload: object) -> str:
+    def generate(payload: dict) -> str:
         """
         generates a jwt token
 
@@ -16,7 +16,7 @@ class Token:
         return token.decode('utf-8')
 
     @staticmethod
-    def decode(token: str) -> object:
+    def decode(token: str) -> dict:
         """
         decodes a jwt token into it's payload
 
