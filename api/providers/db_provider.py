@@ -1,5 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection, AsyncIOMotorClientSession
 from aioredis import Redis
+from aioredis.commands import MultiExec
 from typing import Optional
 
 
@@ -13,12 +14,12 @@ class DBProvider:
         self._mongo_connection = mongo_connection
         self._redis_connection = redis_connection
         self._mongo_session: Optional[AsyncIOMotorClientSession] = None
-        self._redis_session = None
+        self._redis_session: Optional[MultiExec] = None
 
     def get_redis(self) -> Redis:
         return self._redis_connection
 
-    def get_redis_session(self):
+    def get_redis_session(self) -> MultiExec:
         return self._redis_session
 
     def start_redis_transaction(self):

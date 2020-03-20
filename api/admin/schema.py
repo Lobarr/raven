@@ -2,7 +2,7 @@ from cerberus import Validator
 from typing import Optional
 from api.admin.validate import admin_schema
 from api.util import Hasher
-from pydash import omit, omit_by, has, merge, is_empty
+from pydash import omit, omit_by, has, merge, is_none
 
 
 class AdminDTO:
@@ -22,7 +22,7 @@ class AdminDTO:
             {'_id': self.id}
         )
 
-        return omit_by(transformed_data, lambda v: is_empty(v))
+        return omit_by(transformed_data, lambda v: is_none(v))
 
     def is_valid(self) -> bool:
         return self.__validator.validate(self.to_dict())

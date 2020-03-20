@@ -241,11 +241,16 @@ class TestCircuitBreaker:
     async def test_incr_count(self, *args):
         with patch.object(CircuitBreaker, 'count_key') as count_key_mock:
             mock_id = 'some-value'
+            mock_db_provider = MagicMock()
             mock_db = MagicMock()
             mock_db.incr = CoroutineMock()
             expected_count_key = 'some-value'
+
+            mock_db_provider.get_redis.return_value = mock_db
             count_key_mock.return_value = expected_count_key
-            await CircuitBreaker.incr_count(mock_id, mock_db)
+            
+            await CircuitBreaker.incr_count(mock_id, mock_db_provider)
+
             mock_db.incr.assert_awaited_with(expected_count_key)
 
     @pytest.mark.asyncio
@@ -264,7 +269,9 @@ class TestCircuitBreaker:
 
             count_key_mock.assert_called_with(mock_id)
             mock_db.get.assert_awaited_with(
-                expected_count_key, encoding='utf-8')
+                expected_count_key, 
+                encoding='utf-8'
+            )
 
     @pytest.mark.asyncio
     async def test_set_count(self, *args):
@@ -277,15 +284,17 @@ class TestCircuitBreaker:
             mock_db_provider = MagicMock()
             mock_db = MagicMock()
             
-            mock_db_provider.get_redis.return_value = mock_db
-            mock_db.set = CoroutineMock()
+            mock_db_provider.get_redis_session.return_value = mock_db
+            mock_db.set = MagicMock()
             count_key_mock.return_value = expected_count_key
 
             await CircuitBreaker.set_count(mock_id, mock_count, mock_timeout, mock_db_provider)
 
+            mock_db_provider.get_redis_session()
             count_key_mock.assert_called_with(mock_id)
-            mock_db.set.assert_awaited_with(
-                expected_count_key, mock_count, 
+            mock_db.set.assert_called_with(
+                expected_count_key, 
+                mock_count, 
                 expire=mock_timeout
             )
 
@@ -319,12 +328,15 @@ class TestCircuitBreaker:
             mock_db_provider = MagicMock()
             mock_db = MagicMock()
 
-            mock_db_provider.get_redis.return_value = mock_db
-            mock_db.set = CoroutineMock()
+            mock_db_provider.get_redis_session.return_value = mock_db
+            mock_db.set = MagicMock()
             queued_key_mock.return_value = expected_count_key
 
             await CircuitBreaker.set_queued(mock_id, mock_queued, mock_timeout, mock_db_provider)
 
             queued_key_mock.assert_called_with(mock_id)
-            mock_db.set.assert_awaited_with(
-                expected_count_key, mock_queued, expire=mock_timeout)
+            mock_db.set.assert_called_with(
+                expected_count_key, 
+                mock_queued, 
+                expire=mock_timeout
+            )

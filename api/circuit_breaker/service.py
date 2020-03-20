@@ -245,9 +245,9 @@ class CircuitBreaker:
         @param timeout: (int) redis expire time
         @param db: redis instance
         """
-        db = db_provider.get_redis()
+        db = db_provider.get_redis_session()
 
-        await db.set(CircuitBreaker.count_key(_id), count, expire=timeout)
+        db.set(CircuitBreaker.count_key(_id), count, expire=timeout)
 
     @staticmethod
     async def set_queued(_id: str, queued: str, timeout: int, db_provider: DBProvider):
@@ -260,9 +260,9 @@ class CircuitBreaker:
         @param db: redis instance
         """
 
-        db = db_provider.get_redis()
+        db = db_provider.get_redis_session()
 
-        await db.set(CircuitBreaker.queued_key(_id), queued, expire=timeout)
+        db.set(CircuitBreaker.queued_key(_id), queued, expire=timeout)
 
     @staticmethod
     async def get_queued(_id: str, db_provider: DBProvider):
@@ -298,8 +298,8 @@ class CircuitBreaker:
         if has(ctx, 'status_codes'):
             circuit_breaker.status_codes = ctx['status_codes']
 
-        if has(ctx, 'methods'):
-            circuit_breaker.methods = ctx['methods']
+        if has(ctx, 'method'):
+            circuit_breaker.method = ctx['method']
 
         if has(ctx, 'threshold'):
             circuit_breaker.threshold = ctx['threshold']

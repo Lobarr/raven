@@ -1,7 +1,7 @@
 import json
 import multidict
+import copy
 
-from copy import deepcopy
 from typing import List, Optional
 from pydash import has, is_empty
 from bson import json_util
@@ -14,29 +14,29 @@ router = web.RouteTableDef()
 @router.post('/admin/login')
 async def login_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
 
         if not has(ctx, 'username') or not has(ctx, 'password'):
             raise Exception({
-                'message': 'Bad Requeust',
+                'message': 'Bad Request',
                 'status_code': 400
             })
 
         verified = await Admin.verify_password(
             ctx['username'], ctx['password'],
-            DB.get_provider(request)
+            db_provider
         )
 
         if not verified:
             raise Exception({
-                'message': 'Unathorized',
+                'message': 'Unauthorized',
                 'status_code': 401
             })
         
         await db_provider.start_mongo_transaction()
 
-        admin = await Admin.get_by_username(ctx['username'], DB.get_provider(request))
+        admin = await Admin.get_by_username(ctx['username'], db_provider)
 
         await db_provider.end_mongo_transaction()
 
@@ -53,7 +53,7 @@ async def post_handler(request: web.Request):
     try:
         # TODO: make sure no duplicate email, username
 
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         admin_context = json.loads(await request.text())
         admin = Admin.make_dto(admin_context)
 
@@ -73,7 +73,7 @@ async def post_handler(request: web.Request):
 @router.get('/admin')
 async def get_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         has_prop = len(request.rel_url.query.keys()) > 0
 
         await db_provider.start_mongo_transaction()
@@ -118,7 +118,7 @@ async def get_handler(request: web.Request):
 @router.patch('/admin')
 async def patch_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         admin_context = json.loads(await request.text())
         admin = Admin.make_dto(admin_context)
 
@@ -154,7 +154,7 @@ async def delete_handler(request: web.Request):
 
         Validate.validate_object_id(request.rel_url.query.get('id'))
 
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
 
         await db_provider.start_mongo_transaction()
 

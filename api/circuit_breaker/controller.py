@@ -1,13 +1,12 @@
 import json
 import multidict
 import pydash
+import copy
 
-from copy import deepcopy
 from typing import Optional, Union, List
 from bson import json_util
 from aiohttp import web
-from api.circuit_breaker.service import CircuitBreaker
-from api.circuit_breaker.schema import CircuitBreakerDTO
+from api.circuit_breaker import CircuitBreaker, CircuitBreakerDTO
 from api.util import Error, Bson, DB, Validate
 from api.service import controller
 
@@ -18,7 +17,7 @@ router = web.RouteTableDef()
 @router.post('/circuit_breaker')
 async def post_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
         circuit_breaker = CircuitBreaker.make_dto(ctx, normalize=True)
 
@@ -37,7 +36,7 @@ async def post_handler(request: web.Request):
 @router.get('/circuit_breaker')
 async def get_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         circuit_breakers: Optional[List[CircuitBreakerDTO]] = None
         circuit_breaker: Optional[CircuitBreakerDTO] = None
         has_prop = len(request.rel_url.query.keys()) > 0
@@ -90,7 +89,7 @@ async def get_handler(request: web.Request):
 @router.patch('/circuit_breaker')
 async def patch_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
         circuit_breaker = CircuitBreaker.make_dto(ctx)
         
@@ -101,7 +100,9 @@ async def patch_handler(request: web.Request):
                 'status_code': 400
             })
 
+        await db_provider.start_mongo_transaction()
         await CircuitBreaker.update(circuit_breaker, db_provider)
+        await db_provider.end_mongo_transaction()
         
         return web.json_response({
             'message': 'Circuit breaker updated',
@@ -113,7 +114,7 @@ async def patch_handler(request: web.Request):
 @router.delete('/circuit_breaker')
 async def delete_handler(request: web.Request):
     try:
-        db_provider = deepcopy(DB.get_provider(request))
+        db_provider = copy.deepcopy(DB.get_provider(request))
 
         Validate.validate_object_id(request.rel_url.query.get('id'))
 
