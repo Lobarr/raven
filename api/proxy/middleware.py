@@ -152,9 +152,6 @@ async def handle_request(request: web.Request, service: dict, endpoint_cacher: d
     if pydash.is_empty(req_cache):
         req = await Api.call(**req_ctx)
 
-        if pydash.is_empty(req_ctx_hash):
-            req_ctx_hash = Hasher.hash_sha_256(json.dumps(req_ctx))
-
         not pydash.is_empty(endpoint_cacher) and queue_async_func.s({
             'func': 'EndpointCacher.set_cache',
             'args': [req_ctx_hash, req, int(endpoint_cacher['timeout']), 'redis'],

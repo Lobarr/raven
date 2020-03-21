@@ -49,11 +49,11 @@ async def patch_handler(request: web.Request):
         return Error.handle(err)
 
 
-@router.patch('/endpoint_cache/response_codes')
+@router.patch('/endpoint_cache/{id}/response_codes')
 async def patch_handler_response_codes(request: web.Request):
     try:
         ctx = json.loads(await request.text())
-        _id = request.rel_url.query.get('id')
+        _id = request.match_info['id']
         action = request.rel_url.query.get('action')
         Validate.validate_object_id(_id)
         Validate.validate_schema(ctx, endpoint_cache_validator)
@@ -91,6 +91,8 @@ async def delete_handler(request: web.Request):
 @router.post('/endpoint_cache')
 async def post_handler(request: web.Request):
     try:
+        #TODO: validate 'service_id' is in ctx
+
         ctx = json.loads(await request.text())
         Validate.validate_schema(ctx, endpoint_cache_validator)
         await EndpointCacher.create(ctx, DB.get_redis(request), DB.get(request, controller.table))

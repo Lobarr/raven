@@ -8,7 +8,7 @@ from pydash import omit, omit_by, has, merge, is_none
 class AdminDTO:
     def __init__(self):
         self.id: Optional[str] = None
-        self.email: Optional[str]
+        self.email: Optional[str] = None
         self.username: Optional[str] = None
         self.password: Optional[str] = None
         self.token: Optional[str] = None
