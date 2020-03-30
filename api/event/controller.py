@@ -1,10 +1,13 @@
 import json
 import multidict
 import pydash
+import copy 
+
+from typing import Optional, List
 from bson import json_util
 from aiohttp import web
-from .model import Event
-from .schema import event_validator
+from api.event.service import Event
+from api.event.schema import EventDTO
 from api.util import Error, Bson, DB, Validate
 from api.circuit_breaker import controller
 
@@ -15,9 +18,18 @@ table = 'event'
 @router.post('/event')
 async def post_handler(request: web.Request):
     try:
+        db_provider = copy.deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
-        Validate.validate_schema(ctx, event_validator)
-        await Event.create(ctx, DB.get(request, table), DB.get(request, controller.table))
+        event = Event.make_dto(ctx)
+
+        if not event.is_valid():
+            raise Exception({
+                'message': event.get_validation_errors(),
+                'status_code': 400
+            })
+
+        await Event.create(event, db_provider)
+
         return web.json_response({
             'message': 'Event created',
             'status_code': 200
@@ -29,25 +41,54 @@ async def post_handler(request: web.Request):
 @router.get('/event')
 async def get_handler(request: web.Request):
     try:
-        services = []
-        if len(request.rel_url.query.keys()) == 0:
-            services = await Event.get_all(DB.get(request, table))
+        db_provider = copy.deepcopy(DB.get_provider(request))
+        has_prop = len(request.rel_url.query.keys()) > 0
+
+        event: Optional[EventDTO] = None
+        events: Optional[List[EventDTO]] = None
+
+        await db_provider.start_mongo_transaction()
+
+        if not has_prop:
+            events = await Event.get_all(db_provider)
+
         else:
+            
             if 'id' in request.rel_url.query:
-                Validate.validate_object_id(request.rel_url.query.get('id'))
-                service = await Event.get_by_id(request.rel_url.query.get('id'), DB.get(request, table))
-                if service is not None:
-                    services.append(service)
+                _id = request.rel_url.query.get('id')
+                Validate.validate_object_id(_id)
+                
+                event = await Event.get_by_id(_id, db_provider)
+
             elif 'circuit_breaker_id' in request.rel_url.query:
-                Validate.validate_object_id(
-                    request.rel_url.query.get('circuit_breaker_id'))
-                services = await Event.get_by_circuit_breaker_id(request.rel_url.query.get('circuit_breaker_id'), DB.get(request, table))
+                circuit_breaker_id = request.rel_url.query.get('id')
+                Validate.validate_object_id(circuit_breaker_id)
+                
+                events = await Event.get_by_circuit_breaker_id(circuit_breaker_id, db_provider)
+
             elif 'target' in request.rel_url.query:
-                services = await Event.get_by_target(request.rel_url.query.get('target'), DB.get(request, table))
+                target = request.rel_url.query.get('target')
+                events = await Event.get_by_target(target, db_provider)
+
+
+        await db_provider.end_mongo_transaction()
+
+        if event:                
+            return web.json_response({
+                'data': event.to_dict() if event else None,
+                'status_code': 200
+            })
+        elif events:
+            return web.json_response({
+                'data': [_event.to_dict() for _event in events],
+                'status_code': 200
+            })
+
         return web.json_response({
-            'data': DB.format_documents(Bson.to_json(services)),
+            'data': None,
             'status_code': 200
         })
+        
     except Exception as err:
         return Error.handle(err)
 
@@ -55,13 +96,22 @@ async def get_handler(request: web.Request):
 @router.patch('/event')
 async def patch_handler(request: web.Request):
     try:
+        db_provider = copy.deepcopy(DB.get_provider(request))
         ctx = json.loads(await request.text())
-        event_id = request.rel_url.query['id']
-        Validate.validate_object_id(event_id)
-        Validate.validate_schema(ctx, event_validator)
-        await Event.update(event_id, pydash.omit(ctx, '_id'), DB.get(request, table))
+        event = Event.make_dto(ctx)
+        event_id = request.rel_url.query.get('id')
+
+        if not event.is_valid():
+            raise Exception({
+                'message': event.get_validation_errors(),
+                'staus_code': 400
+            })
+
+        await Event.update(event, db_provider)
+
         return web.json_response({
-            'message': 'event updated',
+            'message': 'Event updated',
+            'status_code': 200
         })
     except Exception as err:
         return Error.handle(err)
@@ -70,11 +120,18 @@ async def patch_handler(request: web.Request):
 @router.delete('/event')
 async def delete_handler(request: web.Request):
     try:
+        db_provider = copy.deepcopy(DB.get_provider(request))
+
         Validate.validate_object_id(request.rel_url.query.get('id'))
-        await Event.remove(request.rel_url.query.get('id'), DB.get(request, table))
+
+        await db_provider.start_mongo_transaction()
+        await Event.remove(request.rel_url.query.get('id'), db_provider)
+        await db_provider.end_mongo_transaction()
+
         return web.json_response({
-            'message': 'Service deleted',
+            'message': 'Event deleted',
             'status_code': 200
         })
+
     except Exception as err:
         return Error.handle(err)

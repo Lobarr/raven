@@ -1,17 +1,19 @@
 import bson
 import re
+
+from typing import Optional
 from cerberus import Validator
 
 
 class Validate:
     @staticmethod
-    def validate_object_id(id: str):
+    def validate_object_id(_id: Optional[str]):
         """
         validates a bson object id
 
         @param id: (str) id to be validated
         """
-        if not bson.ObjectId.is_valid(id):
+        if not _id or not bson.ObjectId.is_valid(id):
             raise Exception({
                 'message': 'Invalid id provided',
                 'status_code': 400

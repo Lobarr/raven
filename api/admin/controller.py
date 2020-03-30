@@ -57,10 +57,14 @@ async def post_handler(request: web.Request):
         admin_context = json.loads(await request.text())
         admin = Admin.make_dto(admin_context)
 
+        if not admin.is_valid():
+            raise Exception({
+                'message': admin.get_validation_errors(),
+                'status_code': 400
+            })
+
         await db_provider.start_mongo_transaction()
-
         await Admin.create(admin, db_provider)
-
         await db_provider.end_mongo_transaction()
 
         return web.json_response({

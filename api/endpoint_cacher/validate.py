@@ -3,7 +3,8 @@ from api.util import Bson
 
 endpoint_cacher_schema = {
     '_id': {
-        'type': 'string'
+        'type': 'string',
+        'check_with': Bson.validate_schema_id
     },
     'service_id': {
         'type': 'string',

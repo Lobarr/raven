@@ -14,15 +14,17 @@ from api.service import Service
 endpoint_cacher_set = 'endpoint_cacher_set'
 endpoint_cache_service_id_index = 'endpoint_cache_service_id'
 
+"""
+
+The purpose of the indexes is to speed up the process of searching specific fields in a redis stored EndpointCacher object. 
+Since we cannot have complex queries in redis, a redis hashmap is used as an index to store highly used fields.
+This is achieved by mapping the id of the EndpointCacher to the field's value. 
+endpoint_cacher.id --> *field's value*
+
+"""
 
 class EndpointCacher:
 
-    """
-    The purpose of the indexes is to speed up the process of searching specific fields in a redis stored EndpointCacher object. 
-    Since we cannot have complex queries in redis, a redis hashmap is used as an index to store highly used fields.
-    This is achieved by mapping the id of the EndpointCacher to the field's value. 
-    endpoint_cacher.id --> *field's value*
-    """
 
     @staticmethod
     async def _set_indexes(endpoint_cacher: EndpointCacherDTO, db_provider: DBProvider):
@@ -237,7 +239,7 @@ class EndpointCacher:
         return endpoint_cachers
 
     @staticmethod
-    async def get_all(db_provider: DBProvider) -> list:
+    async def get_all(db_provider: DBProvider) -> List[EndpointCacherDTO]:
         """
         gets all endpoint caches
 
