@@ -1,4 +1,4 @@
-aiohttp==3.5.4
+aiohttp==3.7.4
 aiohttp-cors==0.7.0
 aioredis==1.2.0
 amqp==2.5.0
